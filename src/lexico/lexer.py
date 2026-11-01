@@ -73,6 +73,10 @@ tokens_base = [
 
 # ===== Mateo Andrade =====
 tokens_mateo = [
+    "ENTERO",
+    "ENTERO_LARGO",
+    "DECIMAL",
+    "FLOTANTE",
 ]
 # ===== Fin Mateo Andrade =====
 
@@ -125,6 +129,31 @@ def t_COMENTARIO_SIN_CERRAR(t):
 def t_COMENTARIO_LINEA(t):
     r"//[^\n]*"
     pass
+
+
+def t_FLOTANTE(t):
+    r"\d+(\.\d+)?[fF]"
+    t.value = float(t.value[:-1])
+    return t
+
+
+def t_DECIMAL(t):
+    r"\d+\.\d+"
+    t.value = float(t.value)
+    return t
+
+
+def t_ENTERO_LARGO(t):
+    r"\d[\d_]*L"
+    t.value = int(t.value[:-1].replace("_", ""))
+    return t
+
+
+def t_ENTERO(t):
+    r"\d[\d_]*"
+    t.value = int(t.value.replace("_", ""))
+    return t
+
 # ===== Fin Mateo Andrade =====
 
 
