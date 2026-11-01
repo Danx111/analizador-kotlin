@@ -111,6 +111,20 @@ tokens = (
 # =============================================================================
 
 # ===== Mateo Andrade =====
+def t_COMENTARIO_MULTILINEA(t):
+    r"/\*(.|\n)*?\*/"
+    t.lexer.lineno += t.value.count("\n")
+
+
+def t_COMENTARIO_SIN_CERRAR(t):
+    r"/\*(.|\n)*"
+    t.lexer.errores.append(f"Error léxico: comentario sin cerrar en la línea {t.lineno}")
+    t.lexer.lineno += t.value.count("\n")
+
+
+def t_COMENTARIO_LINEA(t):
+    r"//[^\n]*"
+    pass
 # ===== Fin Mateo Andrade =====
 
 
