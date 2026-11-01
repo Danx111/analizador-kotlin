@@ -40,7 +40,17 @@ CARPETA_LOGS = RAIZ_PROYECTO / "logs"
 
 # ===== Mateo Andrade =====
 reserved_mateo = {
+    "val": "VAL",
+    "var": "VAR",
+    "const": "CONST",
+    "fun": "FUN",
+    "return": "RETURN",
+    "if": "IF",
+    "else": "ELSE",
+    "listOf": "LISTOF",
+    "mutableListOf": "MUTABLELISTOF",
 }
+# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 reserved_alan = {
@@ -64,6 +74,7 @@ tokens_base = [
 # ===== Mateo Andrade =====
 tokens_mateo = [
 ]
+# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 tokens_alan = [
@@ -87,7 +98,7 @@ tokens = (
 # =============================================================================
 
 # ===== Mateo Andrade =====
-
+# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 
@@ -100,6 +111,7 @@ tokens = (
 # =============================================================================
 
 # ===== Mateo Andrade =====
+# ===== Fin Mateo Andrade =====
 
 
 # ===== Alan Aguilar =====
