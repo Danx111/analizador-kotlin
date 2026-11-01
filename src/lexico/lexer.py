@@ -44,6 +44,12 @@ reserved_mateo = {
 
 # ===== Alan Aguilar =====
 reserved_alan = {
+    "val": "VAL",       # declaración de variable inmutable
+    "when": "WHEN",     # switch
+    "for": "FOR",       # bucle for
+    "in": "IN",         # for (x in coleccion)
+    "while": "WHILE",   # bucle while
+    "do": "DO",         # bucle do-while
 }
 
 # ===== Daniela Espinoza =====
