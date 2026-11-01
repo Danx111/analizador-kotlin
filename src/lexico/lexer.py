@@ -50,6 +50,13 @@ reserved_alan = {
     "in": "IN",         # for (x in coleccion)
     "while": "WHILE",   # bucle while
     "do": "DO",         # bucle do-while
+    # Booleans
+    "true": "TRUE",
+    "false": "FALSE",
+    # Map / MutableMap
+    "mapOf": "MAPOF",
+    "mutableMapOf": "MUTABLEMAPOF",
+    "to": "TO",        # "clave" to valor
 }
 
 # ===== Daniela Espinoza =====
@@ -73,6 +80,7 @@ tokens_mateo = [
 
 # ===== Alan Aguilar =====
 tokens_alan = [
+    "CHAR",
 ]
 
 # ===== Daniela Espinoza =====
@@ -96,6 +104,9 @@ tokens = (
 
 
 # ===== Alan Aguilar =====
+# Char: un solo carácter o una secuencia de escape entre comillas simples
+# Ejemplos: 'a', '7', '\n', '\'', '\u0041'
+t_CHAR = r"'([^'\\\n]|\\[tbnr'\"\\$]|\\u[0-9a-fA-F]{4})'"
 
 
 # ===== Daniela Espinoza =====
