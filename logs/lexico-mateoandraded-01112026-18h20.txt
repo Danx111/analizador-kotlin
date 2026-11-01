@@ -1,0 +1,177 @@
+Análisis léxico - algoritmos/algoritmo_mateo.kt
+Usuario: mateoandraded
+Fecha: 01/11/2026 18:20:45
+
+TOKENS (131)
+Línea 5: CONST -> 'const'
+Línea 5: VAL -> 'val'
+Línea 5: ID -> 'NOTA_MINIMA'
+Línea 5: ASIGNAR -> '='
+Línea 5: ENTERO -> 7
+Línea 7: FUN -> 'fun'
+Línea 7: ID -> 'promedio'
+Línea 7: ID -> 'notas'
+Línea 7: ID -> 'List'
+Línea 7: ID -> 'Int'
+Línea 7: ID -> 'Double'
+Línea 7: LLAVEIZQ -> '{'
+Línea 8: VAR -> 'var'
+Línea 8: ID -> 'suma'
+Línea 8: ASIGNAR -> '='
+Línea 8: DECIMAL -> 0.0
+Línea 9: ID -> 'for'
+Línea 9: ID -> 'nota'
+Línea 9: ID -> 'in'
+Línea 9: ID -> 'notas'
+Línea 9: LLAVEIZQ -> '{'
+Línea 10: ID -> 'suma'
+Línea 10: MAS_ASIGNAR -> '+='
+Línea 10: ID -> 'nota'
+Línea 11: LLAVEDER -> '}'
+Línea 12: RETURN -> 'return'
+Línea 12: ID -> 'suma'
+Línea 12: DIVIDIDO -> '/'
+Línea 12: ID -> 'notas'
+Línea 12: ID -> 'size'
+Línea 13: LLAVEDER -> '}'
+Línea 15: FUN -> 'fun'
+Línea 15: ID -> 'main'
+Línea 15: LLAVEIZQ -> '{'
+Línea 16: VAL -> 'val'
+Línea 16: ID -> 'notas'
+Línea 16: ASIGNAR -> '='
+Línea 16: LISTOF -> 'listOf'
+Línea 16: ENTERO -> 8
+Línea 16: ENTERO -> 6
+Línea 16: ENTERO -> 10
+Línea 17: VAR -> 'var'
+Línea 17: ID -> 'pendientes'
+Línea 17: ASIGNAR -> '='
+Línea 17: MUTABLELISTOF -> 'mutableListOf'
+Línea 17: ENTERO -> 5
+Línea 17: ENTERO -> 9
+Línea 19: VAL -> 'val'
+Línea 19: ID -> 'poblacion'
+Línea 19: ASIGNAR -> '='
+Línea 19: ENTERO -> 1000000
+Línea 20: VAL -> 'val'
+Línea 20: ID -> 'grande'
+Línea 20: ASIGNAR -> '='
+Línea 20: ENTERO_LARGO -> 10
+Línea 21: VAL -> 'val'
+Línea 21: ID -> 'pi'
+Línea 21: ASIGNAR -> '='
+Línea 21: DECIMAL -> 3.14
+Línea 22: VAL -> 'val'
+Línea 22: ID -> 'precio'
+Línea 22: ASIGNAR -> '='
+Línea 22: FLOTANTE -> 2.5
+Línea 23: VAL -> 'val'
+Línea 23: ID -> 'dos'
+Línea 23: ASIGNAR -> '='
+Línea 23: FLOTANTE -> 2.0
+Línea 25: VAR -> 'var'
+Línea 25: ID -> 'total'
+Línea 25: ASIGNAR -> '='
+Línea 25: ID -> 'poblacion'
+Línea 25: MAS -> '+'
+Línea 25: ID -> 'grande'
+Línea 25: POR -> '*'
+Línea 25: ENTERO -> 2
+Línea 25: MENOS -> '-'
+Línea 25: ID -> 'pendientes'
+Línea 25: ID -> 'size'
+Línea 25: DIVIDIDO -> '/'
+Línea 25: ENTERO -> 4
+Línea 25: MODULO -> '%'
+Línea 25: ENTERO -> 3
+Línea 26: ID -> 'total'
+Línea 26: MAS_ASIGNAR -> '+='
+Línea 26: ENTERO -> 1
+Línea 27: ID -> 'total'
+Línea 27: MENOS_ASIGNAR -> '-='
+Línea 27: ENTERO -> 2
+Línea 28: ID -> 'total'
+Línea 28: POR_ASIGNAR -> '*='
+Línea 28: ENTERO -> 3
+Línea 29: ID -> 'total'
+Línea 29: DIVIDIDO_ASIGNAR -> '/='
+Línea 29: ENTERO -> 4
+Línea 30: ID -> 'total'
+Línea 30: MODULO_ASIGNAR -> '%='
+Línea 30: ENTERO -> 5
+Línea 32: ID -> 'for'
+Línea 32: ID -> 'i'
+Línea 32: ID -> 'in'
+Línea 32: ENTERO -> 1
+Línea 32: RANGO -> '..'
+Línea 32: ENTERO -> 10
+Línea 32: LLAVEIZQ -> '{'
+Línea 33: ID -> 'total'
+Línea 33: ASIGNAR -> '='
+Línea 33: ID -> 'total'
+Línea 33: MAS -> '+'
+Línea 33: ID -> 'i'
+Línea 34: LLAVEDER -> '}'
+Línea 36: VAL -> 'val'
+Línea 36: ID -> 'resultado'
+Línea 36: ASIGNAR -> '='
+Línea 36: ID -> 'promedio'
+Línea 36: ID -> 'notas'
+Línea 37: IF -> 'if'
+Línea 37: ID -> 'resultado'
+Línea 37: ASIGNAR -> '='
+Línea 37: ID -> 'NOTA_MINIMA'
+Línea 37: LLAVEIZQ -> '{'
+Línea 38: ID -> 'println'
+Línea 38: ID -> 'Aprobado'
+Línea 39: LLAVEDER -> '}'
+Línea 39: ELSE -> 'else'
+Línea 39: LLAVEIZQ -> '{'
+Línea 40: ID -> 'println'
+Línea 40: ID -> 'Reprobado'
+Línea 41: LLAVEDER -> '}'
+Línea 43: VAL -> 'val'
+Línea 43: ID -> 'error'
+Línea 43: ASIGNAR -> '='
+
+ERRORES (39)
+Error léxico: carácter no reconocido '(' en la línea 7
+Error léxico: carácter no reconocido ':' en la línea 7
+Error léxico: carácter no reconocido '<' en la línea 7
+Error léxico: carácter no reconocido '>' en la línea 7
+Error léxico: carácter no reconocido ')' en la línea 7
+Error léxico: carácter no reconocido ':' en la línea 7
+Error léxico: carácter no reconocido '(' en la línea 9
+Error léxico: carácter no reconocido ')' en la línea 9
+Error léxico: carácter no reconocido '.' en la línea 12
+Error léxico: carácter no reconocido '(' en la línea 15
+Error léxico: carácter no reconocido ')' en la línea 15
+Error léxico: carácter no reconocido '(' en la línea 16
+Error léxico: carácter no reconocido ',' en la línea 16
+Error léxico: carácter no reconocido ',' en la línea 16
+Error léxico: carácter no reconocido ')' en la línea 16
+Error léxico: carácter no reconocido '(' en la línea 17
+Error léxico: carácter no reconocido ',' en la línea 17
+Error léxico: carácter no reconocido ')' en la línea 17
+Error léxico: carácter no reconocido '(' en la línea 25
+Error léxico: carácter no reconocido ')' en la línea 25
+Error léxico: carácter no reconocido '.' en la línea 25
+Error léxico: carácter no reconocido '(' en la línea 32
+Error léxico: carácter no reconocido ')' en la línea 32
+Error léxico: carácter no reconocido '(' en la línea 36
+Error léxico: carácter no reconocido ')' en la línea 36
+Error léxico: carácter no reconocido '(' en la línea 37
+Error léxico: carácter no reconocido '>' en la línea 37
+Error léxico: carácter no reconocido ')' en la línea 37
+Error léxico: carácter no reconocido '(' en la línea 38
+Error léxico: carácter no reconocido '"' en la línea 38
+Error léxico: carácter no reconocido '"' en la línea 38
+Error léxico: carácter no reconocido ')' en la línea 38
+Error léxico: carácter no reconocido '(' en la línea 40
+Error léxico: carácter no reconocido '"' en la línea 40
+Error léxico: carácter no reconocido '"' en la línea 40
+Error léxico: carácter no reconocido ')' en la línea 40
+Error léxico: carácter no reconocido '#' en la línea 43
+Error léxico: carácter no reconocido '@' en la línea 43
+Error léxico: comentario sin cerrar en la línea 44

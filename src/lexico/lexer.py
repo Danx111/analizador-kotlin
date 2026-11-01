@@ -77,6 +77,20 @@ tokens_mateo = [
     "ENTERO_LARGO",
     "DECIMAL",
     "FLOTANTE",
+    "MAS",
+    "MENOS",
+    "POR",
+    "DIVIDIDO",
+    "MODULO",
+    "ASIGNAR",
+    "MAS_ASIGNAR",
+    "MENOS_ASIGNAR",
+    "POR_ASIGNAR",
+    "DIVIDIDO_ASIGNAR",
+    "MODULO_ASIGNAR",
+    "RANGO",
+    "LLAVEIZQ",
+    "LLAVEDER",
 ]
 # ===== Fin Mateo Andrade =====
 
@@ -102,6 +116,23 @@ tokens = (
 # =============================================================================
 
 # ===== Mateo Andrade =====
+t_MAS = r"\+"
+t_MENOS = r"-"
+t_POR = r"\*"
+t_DIVIDIDO = r"/"
+t_MODULO = r"%"
+
+t_ASIGNAR = r"="
+t_MAS_ASIGNAR = r"\+="
+t_MENOS_ASIGNAR = r"-="
+t_POR_ASIGNAR = r"\*="
+t_DIVIDIDO_ASIGNAR = r"/="
+t_MODULO_ASIGNAR = r"%="
+
+t_RANGO = r"\.\."
+
+t_LLAVEIZQ = r"\{"
+t_LLAVEDER = r"\}"
 # ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
