@@ -49,7 +49,6 @@ reserved_mateo = {
     "listOf": "LISTOF",
     "mutableListOf": "MUTABLELISTOF",
 }
-# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 reserved_alan = {
@@ -114,7 +113,6 @@ tokens_mateo = [
     "LLAVEIZQ",
     "LLAVEDER",
 ]
-# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 tokens_alan = [
@@ -256,11 +254,6 @@ def t_ENTERO(t):
     r"\d[\d_]*"
     t.value = int(t.value.replace("_", ""))
     return t
-
-# ===== Fin Mateo Andrade =====
-
-
-# ===== Alan Aguilar =====
 
 
 # ===== Daniela Espinoza =====
