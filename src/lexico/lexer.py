@@ -40,7 +40,17 @@ CARPETA_LOGS = RAIZ_PROYECTO / "logs"
 
 # ===== Mateo Andrade =====
 reserved_mateo = {
+    "val": "VAL",
+    "var": "VAR",
+    "const": "CONST",
+    "fun": "FUN",
+    "return": "RETURN",
+    "if": "IF",
+    "else": "ELSE",
+    "listOf": "LISTOF",
+    "mutableListOf": "MUTABLELISTOF",
 }
+# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 reserved_alan = {
@@ -76,7 +86,26 @@ tokens_base = [
 
 # ===== Mateo Andrade =====
 tokens_mateo = [
+    "ENTERO",
+    "ENTERO_LARGO",
+    "DECIMAL",
+    "FLOTANTE",
+    "MAS",
+    "MENOS",
+    "POR",
+    "DIVIDIDO",
+    "MODULO",
+    "ASIGNAR",
+    "MAS_ASIGNAR",
+    "MENOS_ASIGNAR",
+    "POR_ASIGNAR",
+    "DIVIDIDO_ASIGNAR",
+    "MODULO_ASIGNAR",
+    "RANGO",
+    "LLAVEIZQ",
+    "LLAVEDER",
 ]
+# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 tokens_alan = [
@@ -109,7 +138,24 @@ tokens = (
 # =============================================================================
 
 # ===== Mateo Andrade =====
+t_MAS = r"\+"
+t_MENOS = r"-"
+t_POR = r"\*"
+t_DIVIDIDO = r"/"
+t_MODULO = r"%"
 
+t_ASIGNAR = r"="
+t_MAS_ASIGNAR = r"\+="
+t_MENOS_ASIGNAR = r"-="
+t_POR_ASIGNAR = r"\*="
+t_DIVIDIDO_ASIGNAR = r"/="
+t_MODULO_ASIGNAR = r"%="
+
+t_RANGO = r"\.\."
+
+t_LLAVEIZQ = r"\{"
+t_LLAVEDER = r"\}"
+# ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
 # Char: un solo carácter o una secuencia de escape entre comillas simples
@@ -149,6 +195,46 @@ t_COMA = r","
 # =============================================================================
 
 # ===== Mateo Andrade =====
+def t_COMENTARIO_MULTILINEA(t):
+    r"/\*(.|\n)*?\*/"
+    t.lexer.lineno += t.value.count("\n")
+
+
+def t_COMENTARIO_SIN_CERRAR(t):
+    r"/\*(.|\n)*"
+    t.lexer.errores.append(f"Error léxico: comentario sin cerrar en la línea {t.lineno}")
+    t.lexer.lineno += t.value.count("\n")
+
+
+def t_COMENTARIO_LINEA(t):
+    r"//[^\n]*"
+    pass
+
+
+def t_FLOTANTE(t):
+    r"\d+(\.\d+)?[fF]"
+    t.value = float(t.value[:-1])
+    return t
+
+
+def t_DECIMAL(t):
+    r"\d+\.\d+"
+    t.value = float(t.value)
+    return t
+
+
+def t_ENTERO_LARGO(t):
+    r"\d[\d_]*L"
+    t.value = int(t.value[:-1].replace("_", ""))
+    return t
+
+
+def t_ENTERO(t):
+    r"\d[\d_]*"
+    t.value = int(t.value.replace("_", ""))
+    return t
+
+# ===== Fin Mateo Andrade =====
 
 
 # ===== Alan Aguilar =====
