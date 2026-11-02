@@ -87,6 +87,8 @@ tokens_alan = [
     "IGUAL", "DIFERENTE", "MENOR", "MAYOR", "MENORIGUAL", "MAYORIGUAL",
     # Lógicos
     "AND", "OR", "NOT",
+    # Delimitadores
+    "LPAREN", "RPAREN", "CORCHETEIZQ", "CORCHETEDER", "COMA",
 ]
 
 # ===== Daniela Espinoza =====
@@ -111,8 +113,8 @@ tokens = (
 
 # ===== Alan Aguilar =====
 # Char: un solo carácter o una secuencia de escape entre comillas simples
-# Ejemplos: 'a', '7', '\n', '\'', '\u0041' OJO podriamos dejarlo mas sencillo y omitir caracteres unicode?
-t_CHAR = r"'([^'\\\n]|\\[tbnr'\"\\$]|\\u[0-9a-fA-F]{4})'"
+# Ejemplos: 'a', '7', '\n', '\''
+t_CHAR = r"'([^'\\\n]|\\[tbnr'\"\\$])'"
 
 # Incremento / decremento
 t_INCREMENTO = r"\+\+"
@@ -130,6 +132,13 @@ t_MAYOR = r">"
 t_AND = r"&&"
 t_OR = r"\|\|"
 t_NOT = r"!"
+
+# Delimitadores
+t_LPAREN = r"\("
+t_RPAREN = r"\)"
+t_CORCHETEIZQ = r"\["
+t_CORCHETEDER = r"\]"
+t_COMA = r","
 
 
 # ===== Daniela Espinoza =====
