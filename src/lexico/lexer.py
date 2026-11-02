@@ -40,7 +40,6 @@ CARPETA_LOGS = RAIZ_PROYECTO / "logs"
 
 # ===== Mateo Andrade =====
 reserved_mateo = {
-    "val": "VAL",
     "var": "VAR",
     "const": "CONST",
     "fun": "FUN",
@@ -54,16 +53,14 @@ reserved_mateo = {
 
 # ===== Alan Aguilar =====
 reserved_alan = {
-    "val": "VAL",       # declaración de variable inmutable
+    "val": "VAL",       
     "when": "WHEN",     # switch
-    "for": "FOR",       # bucle for
+    "for": "FOR",       
     "in": "IN",         # for (x in coleccion)
-    "while": "WHILE",   # bucle while
-    "do": "DO",         # bucle do-while
-    # Booleans
+    "while": "WHILE",  
+    "do": "DO",         
     "true": "TRUE",
     "false": "FALSE",
-    # Map / MutableMap
     "mapOf": "MAPOF",
     "mutableMapOf": "MUTABLEMAPOF",
     "to": "TO",        # "clave" to valor
@@ -110,9 +107,7 @@ tokens_mateo = [
 # ===== Alan Aguilar =====
 tokens_alan = [
     "CHAR",
-    # Incremento / decremento
     "INCREMENTO", "DECREMENTO",
-    # Relacionales
     "IGUAL", "DIFERENTE", "MENOR", "MAYOR", "MENORIGUAL", "MAYORIGUAL",
     # Lógicos
     "AND", "OR", "NOT",
@@ -162,7 +157,6 @@ t_LLAVEDER = r"\}"
 # Ejemplos: 'a', '7', '\n', '\''
 t_CHAR = r"'([^'\\\n]|\\[tbnr'\"\\$])'"
 
-# Incremento / decremento
 t_INCREMENTO = r"\+\+"
 t_DECREMENTO = r"--"
 
