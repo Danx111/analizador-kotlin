@@ -48,6 +48,18 @@ reserved_alan = {
 
 # ===== Daniela Espinoza =====
 reserved_daniela = {
+    'var' : 'VAR',
+    'const' : 'CONST',
+    'null': 'NULL',
+    'true': 'TRUE',
+    'false': 'FALSE',
+    'break': 'BREAK',
+    'continue': 'CONTINUE',
+    'class': 'CLASS',
+    'setOf': 'SETOF',
+    'mutableSetOf': 'MUTABLESETOF',
+    'is': 'IS',
+    'as': 'AS',
 }
 
 reserved = {**reserved_mateo, **reserved_alan, **reserved_daniela}
@@ -71,6 +83,16 @@ tokens_alan = [
 
 # ===== Daniela Espinoza =====
 tokens_daniela = [
+    'STRING_LITERAL',
+    'CHAR_LITERAL',
+    'SAFE_CALL',        # ?.
+    'ELVIS',            # ?:
+    'NOT_NULL_ASSERT',  # !!
+    'ARROW',            # ->
+    'NEWLINE',
+    'COLON',            # : 
+    'SEMICOLON',        # ; 
+    'DOT',
 ]
 
 tokens = (
@@ -93,7 +115,14 @@ tokens = (
 
 
 # ===== Daniela Espinoza =====
+t_ELVIS = r'\?:'
+t_SAFE_CALL = r'\?\.'
+t_NOT_NULL_ASSERT = r'!!'
+t_ARROW = r'->'
 
+t_COLON = r':'
+t_SEMICOLON = r';'
+t_DOT  = r'\.'
 
 # =============================================================================
 # 4. REGLAS CON ACCIÓN (funciones) — el orden importa
@@ -106,6 +135,13 @@ tokens = (
 
 
 # ===== Daniela Espinoza =====
+def t_STRING_LITERAL(t):
+    r'\"([^\\\n]|(\\.))*?\"'
+    return t
+
+def t_CHAR_LITERAL(t):
+    r'\'([^\\\n]|(\\.))\''
+    return t
 
 
 # =============================================================================
