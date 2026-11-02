@@ -81,6 +81,12 @@ tokens_mateo = [
 # ===== Alan Aguilar =====
 tokens_alan = [
     "CHAR",
+    # Incremento / decremento
+    "INCREMENTO", "DECREMENTO",
+    # Relacionales
+    "IGUAL", "DIFERENTE", "MENOR", "MAYOR", "MENORIGUAL", "MAYORIGUAL",
+    # Lógicos
+    "AND", "OR", "NOT",
 ]
 
 # ===== Daniela Espinoza =====
@@ -105,8 +111,25 @@ tokens = (
 
 # ===== Alan Aguilar =====
 # Char: un solo carácter o una secuencia de escape entre comillas simples
-# Ejemplos: 'a', '7', '\n', '\'', '\u0041'
+# Ejemplos: 'a', '7', '\n', '\'', '\u0041' OJO podriamos dejarlo mas sencillo y omitir caracteres unicode?
 t_CHAR = r"'([^'\\\n]|\\[tbnr'\"\\$]|\\u[0-9a-fA-F]{4})'"
+
+# Incremento / decremento
+t_INCREMENTO = r"\+\+"
+t_DECREMENTO = r"--"
+
+# Relacionales 
+t_IGUAL = r"=="
+t_DIFERENTE = r"!="
+t_MENORIGUAL = r"<="
+t_MAYORIGUAL = r">="
+t_MENOR = r"<"
+t_MAYOR = r">"
+
+# Lógicos
+t_AND = r"&&"
+t_OR = r"\|\|"
+t_NOT = r"!"
 
 
 # ===== Daniela Espinoza =====
