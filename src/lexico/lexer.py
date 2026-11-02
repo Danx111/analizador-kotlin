@@ -40,7 +40,6 @@ CARPETA_LOGS = RAIZ_PROYECTO / "logs"
 
 # ===== Mateo Andrade =====
 reserved_mateo = {
-    "val": "VAL",
     "var": "VAR",
     "const": "CONST",
     "fun": "FUN",
@@ -54,6 +53,17 @@ reserved_mateo = {
 
 # ===== Alan Aguilar =====
 reserved_alan = {
+    "val": "VAL",       
+    "when": "WHEN",     # switch
+    "for": "FOR",       
+    "in": "IN",         # for (x in coleccion)
+    "while": "WHILE",  
+    "do": "DO",         
+    "true": "TRUE",
+    "false": "FALSE",
+    "mapOf": "MAPOF",
+    "mutableMapOf": "MUTABLEMAPOF",
+    "to": "TO",        # "clave" to valor
 }
 
 # ===== Daniela Espinoza =====
@@ -96,6 +106,13 @@ tokens_mateo = [
 
 # ===== Alan Aguilar =====
 tokens_alan = [
+    "CHAR",
+    "INCREMENTO", "DECREMENTO",
+    "IGUAL", "DIFERENTE", "MENOR", "MAYOR", "MENORIGUAL", "MAYORIGUAL",
+    # Lógicos
+    "AND", "OR", "NOT",
+    # Delimitadores
+    "LPAREN", "RPAREN", "CORCHETEIZQ", "CORCHETEDER", "COMA",
 ]
 
 # ===== Daniela Espinoza =====
@@ -136,6 +153,32 @@ t_LLAVEDER = r"\}"
 # ===== Fin Mateo Andrade =====
 
 # ===== Alan Aguilar =====
+# Char: un solo carácter o una secuencia de escape entre comillas simples
+# Ejemplos: 'a', '7', '\n', '\''
+t_CHAR = r"'([^'\\\n]|\\[tbnr'\"\\$])'"
+
+t_INCREMENTO = r"\+\+"
+t_DECREMENTO = r"--"
+
+# Relacionales 
+t_IGUAL = r"=="
+t_DIFERENTE = r"!="
+t_MENORIGUAL = r"<="
+t_MAYORIGUAL = r">="
+t_MENOR = r"<"
+t_MAYOR = r">"
+
+# Lógicos
+t_AND = r"&&"
+t_OR = r"\|\|"
+t_NOT = r"!"
+
+# Delimitadores
+t_LPAREN = r"\("
+t_RPAREN = r"\)"
+t_CORCHETEIZQ = r"\["
+t_CORCHETEDER = r"\]"
+t_COMA = r","
 
 
 # ===== Daniela Espinoza =====
