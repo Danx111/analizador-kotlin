@@ -23,6 +23,16 @@ from src.lexer import tokens
 precedence = (
     # Definir aquí de menor a mayor precedencia (left, right, nonassoc)
     # Ejemplos: conectores lógicos, operadores relacionales, suma/resta, mult/div, unarios
+    #Daniela Espinoza (Lógica/Comparación)
+    ('left', 'OR'),
+    ('left', 'AND'),
+    ('nonassoc', 'IGUAL', 'DIFERENTE'),
+    ('nonassoc', 'MENOR', 'MAYOR', 'MENORIGUAL', 'MAYORIGUAL'),
+    ('left', 'ELVIS'),                          # ?:
+    ('nonassoc', 'RANGO'),                      # ..
+    # aquí va lo aritmético de Alan: MAS/MENOS, POR/DIVIDIDO/MODULO
+    ('right', 'NOT'),                           # ! 
+    ('left', 'SAFE_CALL', 'NOT_NULL_ASSERT'),   # ?.  !!
 )
 
 
