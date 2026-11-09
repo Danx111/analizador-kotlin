@@ -30,7 +30,7 @@ from pathlib import Path
 
 import ply.lex as lex
 
-RAIZ_PROYECTO = Path(__file__).resolve().parents[2]
+RAIZ_PROYECTO = Path(__file__).resolve().parents[1]
 CARPETA_LOGS = RAIZ_PROYECTO / "logs"
 
 
@@ -48,6 +48,16 @@ reserved_mateo = {
     "else": "ELSE",
     "listOf": "LISTOF",
     "mutableListOf": "MUTABLELISTOF",
+    "println": "PRINTLN",
+    "print": "PRINT",
+    "readLine": "READLINE",
+    "readln": "READLN",
+    "Int": "TIPO_INT",
+    "Long": "TIPO_LONG",
+    "Double": "TIPO_DOUBLE",
+    "Float": "TIPO_FLOAT",
+    "List": "TIPO_LIST",
+    "MutableList": "TIPO_MUTABLELIST",
 }
 
 # ===== Alan Aguilar =====

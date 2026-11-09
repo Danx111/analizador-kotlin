@@ -1,0 +1,26 @@
+Análisis sintáctico - algoritmos/algoritmo_mateo.kt
+Usuario: mateoandraded
+Fecha: 08/11/2026 19:14:42
+
+ERRORES LÉXICOS (0)
+
+ERRORES SINTÁCTICOS (19)
+Error sintáctico: token inesperado '+' (MAS) en la línea 8
+Error sintáctico: token inesperado 'var' (VAR) en la línea 12
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 15
+Error sintáctico: token inesperado '/' (DIVIDIDO) en la línea 16
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 17
+Error sintáctico: token inesperado '>=' (MAYORIGUAL) en la línea 20
+Error sintáctico: token inesperado '>=' (MAYORIGUAL) en la línea 22
+Error sintáctico: token inesperado '>=' (MAYORIGUAL) en la línea 24
+Error sintáctico: token inesperado 'for' (FOR) en la línea 33
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 36
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 38
+Error sintáctico: token inesperado '+' (MAS) en la línea 46
+Error sintáctico: token inesperado '+' (MAS) en la línea 59
+Error sintáctico: token inesperado '>' (MAYOR) en la línea 72
+Error sintáctico: token inesperado '>=' (MAYORIGUAL) en la línea 73
+Error sintáctico: token inesperado '>=' (MAYORIGUAL) en la línea 73
+Error sintáctico: token inesperado '>' (MAYOR) en la línea 75
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 77
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 82
