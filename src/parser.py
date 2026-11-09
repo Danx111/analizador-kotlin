@@ -254,9 +254,21 @@ def p_tipo_mateo(p):
 # - Estructuras de datos: Set / MutableSet (setOf, mutableSetOf)
 # - Funciones lambda ({ param -> cuerpo })
 # ==============================================================================
+# agrego mis sentencias al programa
+def p_sentencia_daniela(p):
+    """sentencia : declaracion_nullable
+                 | declaracion_const
+                 | ciclo_while
+                 | ciclo_for
+                 | salto"""
 
 
+# agrego mis expresiones al programa
+def p_expresion_daniela(p):
+    """expresion : conjunto
+                 | lambda_expr"""
 
+#---------------FIN DANIELA ESPINOZA--------------------------------------------
 
 # ==============================================================================
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
