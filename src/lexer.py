@@ -73,6 +73,8 @@ reserved_alan = {
     "mapOf": "MAPOF",
     "mutableMapOf": "MUTABLEMAPOF",
     "to": "TO",        # "clave" to valor
+    "Map": "TIPO_MAP",
+    "MutableMap": "TIPO_MUTABLEMAP",
 }
 
 # ===== Daniela Espinoza =====

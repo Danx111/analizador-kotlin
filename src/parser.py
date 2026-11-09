@@ -261,6 +261,46 @@ def p_expresion_incremento(p):
     """expresion : expresion INCREMENTO
                  | expresion DECREMENTO"""
 
+# sentencias de Alan: declaración de variable mutable
+def p_sentencia_alan(p):
+    """sentencia : declaracion_var"""
+
+
+# declaración mutable con tipo explícito (var x: Tipo = ...)
+def p_declaracion_var(p):
+    """declaracion_var : VAR ID COLON tipo ASIGNAR expresion
+                       | VAR ID COLON tipo ASIGNAR if_expresion"""
+
+
+# expresiones de Alan
+def p_expresion_alan(p):
+    """expresion : mapa"""
+
+
+# creación de mapas con mapOf y mutableMapOf
+def p_mapa(p):
+    """mapa : MAPOF LPAREN pares RPAREN
+            | MUTABLEMAPOF LPAREN pares RPAREN
+            | MAPOF LPAREN RPAREN
+            | MUTABLEMAPOF LPAREN RPAREN
+            | MAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN
+            | MUTABLEMAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN"""
+
+
+def p_pares(p):
+    """pares : par
+             | pares COMA par"""
+
+
+# par clave-valor usando la palabra reservada 'to'
+def p_par(p):
+    "par : expresion TO expresion"
+
+
+# tipos Map y MutableMap con parámetros de tipo genéricos <K, V>
+def p_tipo_alan(p):
+    """tipo : TIPO_MAP MENOR tipo COMA tipo MAYOR
+            | TIPO_MUTABLEMAP MENOR tipo COMA tipo MAYOR"""
 
 
 # ==============================================================================
