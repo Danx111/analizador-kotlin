@@ -313,6 +313,51 @@ def p_tipo_daniela(p):
             | TIPO_MUTABLESET MENOR tipo MAYOR
             | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
 
+# ------------------------------------------------------------------------------
+# Variables nullables y constantes
+# ------------------------------------------------------------------------------
+
+# var / val con tipo nullable, por ejemplo var apodo: String? = null
+def p_declaracion_nullable(p):
+    """declaracion_nullable : VAR ID COLON tipo_nullable ASIGNAR expresion
+                            | VAL ID COLON tipo_nullable ASIGNAR expresion
+                            | VAR ID COLON tipo_nullable"""
+
+
+# constantes, por ejemplo const val MAX: Int = 10
+def p_declaracion_const(p):
+    """declaracion_const : CONST VAL ID COLON tipo ASIGNAR expresion
+                         | CONST VAL ID COLON tipo_nullable ASIGNAR expresion
+                         | CONST VAL ID ASIGNAR expresion"""
+
+
+# ------------------------------------------------------------------------------
+# Null-safety: ?.  ?:  !!
+# ------------------------------------------------------------------------------
+
+# llamada segura, por ejemplo nombre?.length o nombre?.uppercase()
+def p_safe_call(p):
+    """expresion : expresion SAFE_CALL ID
+                 | expresion SAFE_CALL ID LPAREN RPAREN
+                 | expresion SAFE_CALL ID LPAREN argumentos RPAREN"""
+
+
+# operador elvis, por ejemplo nombre ?: "sin nombre"
+def p_elvis(p):
+    "expresion : expresion ELVIS expresion"
+
+
+# aserción de no nulo, por ejemplo nombre!!
+def p_not_null_assert(p):
+    "expresion : expresion NOT_NULL_ASSERT"
+
+
+# aserción de no nulo seguida de acceso, por ejemplo nombre!!.length
+def p_not_null_miembro(p):
+    """expresion : expresion NOT_NULL_ASSERT DOT ID
+                 | expresion NOT_NULL_ASSERT DOT ID LPAREN RPAREN
+                 | expresion NOT_NULL_ASSERT DOT ID LPAREN argumentos RPAREN"""
+
 
 #---------------FIN DANIELA ESPINOZA--------------------------------------------
 
