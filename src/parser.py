@@ -336,6 +336,20 @@ def p_tipo_alan(p):
             | TIPO_MUTABLEMAP MENOR tipo COMA tipo MAYOR"""
 
 
+# funciones de expresión única (fun f(...) = expresion)
+def p_funcion_expresion(p):
+    """funcion : FUN ID LPAREN parametros RPAREN ASIGNAR expresion
+               | FUN ID LPAREN RPAREN ASIGNAR expresion
+               | FUN ID LPAREN parametros RPAREN COLON tipo ASIGNAR expresion
+               | FUN ID LPAREN RPAREN COLON tipo ASIGNAR expresion"""
+
+
+# parámetro formal con valor por defecto (param: Tipo = expresion)
+def p_parametro_defecto(p):
+    "parametro : ID COLON tipo ASIGNAR expresion"
+
+
+
 # ==============================================================================
 # BLOQUE 3: DANIELA ESPINOZA
 # - Expresiones booleanas, operadores lógicos y comparaciones

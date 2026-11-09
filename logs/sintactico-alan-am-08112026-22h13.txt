@@ -1,9 +1,0 @@
-Análisis sintáctico - algoritmos/sintactico_alan_commit3.kt
-Usuario: alan-am
-Fecha: 08/11/2026 22:13:20
-
-ERRORES LÉXICOS (0)
-
-ERRORES SINTÁCTICOS (0)
-
-El programa es sintácticamente válido.
