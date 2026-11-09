@@ -275,6 +275,9 @@ def t_STRING_LITERAL(t):
     r'\"([^\\\n]|(\\.))*?\"'
     return t
 
+def t_CHAR_LITERAL(t):
+    r'\'([^\\\n]|(\\.))\''
+    return t
 
 # =============================================================================
 # 5. REGLAS COMUNES (base compartida)

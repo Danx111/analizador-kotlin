@@ -310,7 +310,9 @@ def p_tipo_daniela(p):
 def p_declaracion_nullable(p):
     """declaracion_nullable : VAR ID COLON tipo_nullable ASIGNAR expresion
                             | VAL ID COLON tipo_nullable ASIGNAR expresion
-                            | VAR ID COLON tipo_nullable"""
+                            | VAR ID COLON tipo_nullable
+                            | VAL ID COLON tipo ASIGNAR expresion
+                            | VAR ID COLON tipo ASIGNAR expresion"""
 
 
 # constantes, por ejemplo const val MAX: Int = 10
