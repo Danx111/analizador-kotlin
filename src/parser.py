@@ -359,6 +359,59 @@ def p_not_null_miembro(p):
                  | expresion NOT_NULL_ASSERT DOT ID LPAREN argumentos RPAREN"""
 
 
+# ------------------------------------------------------------------------------
+# Ciclos: while y for (rango / colección)
+# ------------------------------------------------------------------------------
+
+# while con condición y bloque
+def p_ciclo_while(p):
+    "ciclo_while : WHILE LPAREN expresion RPAREN bloque"
+
+
+# for sobre rango (1..10) o colección (lista): ambos son una expresion
+def p_ciclo_for(p):
+    "ciclo_for : FOR LPAREN ID IN expresion RPAREN bloque"
+
+
+# break y continue dentro de los ciclos
+def p_salto(p):
+    """salto : BREAK
+             | CONTINUE"""
+
+
+# ------------------------------------------------------------------------------
+# Set / MutableSet
+# ------------------------------------------------------------------------------
+
+# creo conjuntos con setOf y mutableSetOf
+def p_conjunto(p):
+    """conjunto : TIPO_SETOF LPAREN RPAREN
+                | TIPO_SETOF LPAREN argumentos RPAREN
+                | TIPO_MUTABLESETOF LPAREN RPAREN
+                | TIPO_MUTABLESETOF LPAREN argumentos RPAREN
+                | TIPO_SETOF MENOR tipo MAYOR LPAREN RPAREN
+                | TIPO_MUTABLESETOF MENOR tipo MAYOR LPAREN RPAREN"""
+
+
+# ------------------------------------------------------------------------------
+# Lambdas: { a: Int, b: Int -> a + b }
+# ------------------------------------------------------------------------------
+
+# lambda con parámetros y cuerpo, se puede asignar con val f = { ... }
+def p_lambda(p):
+    "lambda_expr : LLAVEIZQ parametros_lambda ARROW sentencias LLAVEDER"
+
+
+def p_parametros_lambda(p):
+    """parametros_lambda : parametro_lambda
+                         | parametros_lambda COMA parametro_lambda"""
+
+
+# parámetro con tipo, tipo nullable, o sin tipo ({ x -> x * 2 })
+def p_parametro_lambda(p):
+    """parametro_lambda : ID COLON tipo
+                        | ID COLON tipo_nullable
+                        | ID"""
 #---------------FIN DANIELA ESPINOZA--------------------------------------------
 
 # ==============================================================================
