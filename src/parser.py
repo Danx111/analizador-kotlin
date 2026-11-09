@@ -93,12 +93,18 @@ def p_sentencia_mateo(p):
     """sentencia : impresion
                  | declaracion_val
                  | reasignacion
-                 | condicional"""
+                 | condicional
+                 | funcion
+                 | retorno"""
 
 
 # agrego mis expresiones al programa
 def p_expresion_mateo(p):
-    "expresion : lectura"
+    """expresion : lectura
+                 | lista
+                 | acceso_lista
+                 | acceso_miembro
+                 | llamada_funcion"""
 
 
 # imprimo con println o print
@@ -122,7 +128,8 @@ def p_declaracion_val(p):
 
 # cambio el valor de una variable o de una posición de la lista
 def p_reasignacion(p):
-    "reasignacion : ID operador_asignacion expresion"
+    """reasignacion : ID operador_asignacion expresion
+                    | acceso_lista operador_asignacion expresion"""
 
 
 def p_operador_asignacion(p):
@@ -145,6 +152,73 @@ def p_condicional(p):
 def p_if_expresion(p):
     """if_expresion : IF LPAREN expresion RPAREN expresion ELSE expresion
                     | IF LPAREN expresion RPAREN expresion ELSE if_expresion"""
+
+
+# creo listas con listOf y mutableListOf
+def p_lista(p):
+    """lista : LISTOF LPAREN argumentos RPAREN
+             | MUTABLELISTOF LPAREN argumentos RPAREN
+             | LISTOF MENOR tipo MAYOR LPAREN RPAREN
+             | MUTABLELISTOF MENOR tipo MAYOR LPAREN RPAREN"""
+
+
+# leo una posición de la lista, por ejemplo notas[0]
+def p_acceso_lista(p):
+    "acceso_lista : ID CORCHETEIZQ expresion CORCHETEDER"
+
+
+# uso propiedades y métodos, por ejemplo notas.size o notas.add(4)
+def p_acceso_miembro(p):
+    """acceso_miembro : ID DOT ID
+                      | ID DOT ID LPAREN RPAREN
+                      | ID DOT ID LPAREN argumentos RPAREN
+                      | lectura DOT ID LPAREN RPAREN"""
+
+
+# los valores separados por coma
+def p_argumentos(p):
+    """argumentos : expresion
+                  | argumentos COMA expresion"""
+
+
+# defino una función con parámetros, tipo de retorno y bloque
+def p_funcion(p):
+    """funcion : FUN ID LPAREN parametros RPAREN COLON tipo bloque
+               | FUN ID LPAREN RPAREN COLON tipo bloque
+               | FUN ID LPAREN parametros RPAREN bloque
+               | FUN ID LPAREN RPAREN bloque"""
+
+
+def p_parametros(p):
+    """parametros : parametro
+                  | parametros COMA parametro"""
+
+
+# cada parámetro tiene nombre y tipo
+def p_parametro(p):
+    "parametro : ID COLON tipo"
+
+
+# devuelvo un valor desde la función
+def p_retorno(p):
+    """retorno : RETURN expresion
+               | RETURN"""
+
+
+# llamo a una función, por ejemplo sumar(2, 3)
+def p_llamada_funcion(p):
+    """llamada_funcion : ID LPAREN RPAREN
+                       | ID LPAREN argumentos RPAREN"""
+
+
+# mis tipos: números y listas
+def p_tipo_mateo(p):
+    """tipo : TIPO_INT
+            | TIPO_LONG
+            | TIPO_DOUBLE
+            | TIPO_FLOAT
+            | TIPO_LIST MENOR tipo MAYOR
+            | TIPO_MUTABLELIST MENOR tipo MAYOR"""
 
 
 
