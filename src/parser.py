@@ -22,17 +22,18 @@ from src.lexer import tokens
 # ==============================================================================
 precedence = (
     # Definir aquí de menor a mayor precedencia (left, right, nonassoc)
-    # Ejemplos: conectores lógicos, operadores relacionales, suma/resta, mult/div, unarios
-    #Daniela Espinoza (Lógica/Comparación)
+    # Daniela Espinoza (Lógica / Comparación / Rango)
     ('left', 'OR'),
     ('left', 'AND'),
     ('nonassoc', 'IGUAL', 'DIFERENTE'),
     ('nonassoc', 'MENOR', 'MAYOR', 'MENORIGUAL', 'MAYORIGUAL'),
     ('left', 'ELVIS'),                          # ?:
     ('nonassoc', 'RANGO'),                      # ..
-    # aquí va lo aritmético de Alan: MAS/MENOS, POR/DIVIDIDO/MODULO
-    ('right', 'NOT'),                           # ! 
-    ('left', 'SAFE_CALL', 'NOT_NULL_ASSERT'),   # ?.  !!
+    # Alan Aguilar (Aritmética binaria y unarios)
+    ('left', 'MAS', 'MENOS'),
+    ('left', 'POR', 'DIVIDIDO', 'MODULO'),
+    ('right', 'NOT', 'UMENOS'),                 # operadores unarios
+    ('left', 'SAFE_CALL', 'NOT_NULL_ASSERT', 'INCREMENTO', 'DECREMENTO'), # postfijos
 )
 
 
@@ -241,6 +242,118 @@ def p_tipo_mateo(p):
 # - Estructuras de datos: Map / MutableMap (mapOf, mutableMapOf, 'to')
 # - Funciones de expresión única (= directo) y parámetros por defecto
 # ==============================================================================
+
+# operaciones aritméticas binarias: + - * / %
+# la tabla precedence decide qué se agrupa primero (a + b * c = a + (b * c))
+def p_expresion_aritmetica(p):
+    """expresion : expresion MAS expresion
+                 | expresion MENOS expresion
+                 | expresion POR expresion
+                 | expresion DIVIDIDO expresion
+                 | expresion MODULO expresion"""
+
+
+# los paréntesis cambian el orden de evaluación
+def p_expresion_parentesis(p):
+    "expresion : LPAREN expresion RPAREN"
+
+
+# menos unario: -x, usa la precedencia de UMENOS y no la de la resta
+def p_expresion_negativo(p):
+    "expresion : MENOS expresion %prec UMENOS"
+
+
+# incremento y decremento en 1 (postfijo): x++, x--
+def p_expresion_incremento(p):
+    """expresion : expresion INCREMENTO
+                 | expresion DECREMENTO"""
+
+# sentencias de Alan: declaración de variable mutable y estructura when
+def p_sentencia_alan(p):
+    """sentencia : declaracion_var
+                 | when_stmt"""
+
+
+# declaración mutable con tipo explícito (var x: Tipo = ...)
+def p_declaracion_var(p):
+    """declaracion_var : VAR ID COLON tipo ASIGNAR expresion
+                       | VAR ID COLON tipo ASIGNAR if_expresion
+                       | VAR ID COLON tipo ASIGNAR when_stmt"""
+
+
+# permite usar when como expresión en asignación val (val x = when (...) { ... })
+def p_declaracion_val_when(p):
+    "declaracion_val : VAL ID ASIGNAR when_stmt"
+
+
+# estructura de control when (con evaluación de expresiones o ramas múltiples)
+def p_when_stmt(p):
+    "when_stmt : WHEN LPAREN expresion RPAREN LLAVEIZQ ramas LLAVEDER"
+
+
+def p_ramas(p):
+    """ramas : rama
+             | ramas rama
+             | ramas SEMICOLON"""
+
+
+def p_rama(p):
+    """rama : valores ARROW cuerpo_rama
+            | ELSE ARROW cuerpo_rama"""
+
+
+def p_cuerpo_rama(p):
+    """cuerpo_rama : sentencia
+                   | bloque"""
+
+
+def p_valores(p):
+    """valores : expresion
+               | valores COMA expresion"""
+
+
+# expresiones de Alan
+def p_expresion_alan(p):
+    """expresion : mapa"""
+
+
+# creación de mapas con mapOf y mutableMapOf
+def p_mapa(p):
+    """mapa : MAPOF LPAREN pares RPAREN
+            | MUTABLEMAPOF LPAREN pares RPAREN
+            | MAPOF LPAREN RPAREN
+            | MUTABLEMAPOF LPAREN RPAREN
+            | MAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN
+            | MUTABLEMAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN"""
+
+
+def p_pares(p):
+    """pares : par
+             | pares COMA par"""
+
+
+# par clave-valor usando la palabra reservada 'to'
+def p_par(p):
+    "par : expresion TO expresion"
+
+
+# tipos Map y MutableMap con parámetros de tipo genéricos <K, V>
+def p_tipo_alan(p):
+    """tipo : TIPO_MAP MENOR tipo COMA tipo MAYOR
+            | TIPO_MUTABLEMAP MENOR tipo COMA tipo MAYOR"""
+
+
+# funciones de expresión única (fun f(...) = expresion)
+def p_funcion_expresion(p):
+    """funcion : FUN ID LPAREN parametros RPAREN ASIGNAR expresion
+               | FUN ID LPAREN RPAREN ASIGNAR expresion
+               | FUN ID LPAREN parametros RPAREN COLON tipo ASIGNAR expresion
+               | FUN ID LPAREN RPAREN COLON tipo ASIGNAR expresion"""
+
+
+# parámetro formal con valor por defecto (param: Tipo = expresion)
+def p_parametro_defecto(p):
+    "parametro : ID COLON tipo ASIGNAR expresion"
 
 
 
