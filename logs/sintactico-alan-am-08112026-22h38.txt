@@ -1,0 +1,10 @@
+Análisis sintáctico - algoritmos/sintactico_alan_errores.kt
+Usuario: alan-am
+Fecha: 08/11/2026 22:38:49
+
+ERRORES LÉXICOS (0)
+
+ERRORES SINTÁCTICOS (3)
+Error sintáctico: token inesperado '=' (ASIGNAR) en la línea 4
+Error sintáctico: token inesperado '*' (POR) en la línea 7
+Error sintáctico: token inesperado '"Lunes"' (STRING_LITERAL) en la línea 11
