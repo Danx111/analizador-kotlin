@@ -41,7 +41,6 @@ CARPETA_LOGS = RAIZ_PROYECTO / "logs"
 # ===== Mateo Andrade =====
 reserved_mateo = {
     "var": "VAR",
-    "const": "CONST",
     "fun": "FUN",
     "return": "RETURN",
     "if": "IF",
@@ -77,16 +76,17 @@ reserved_alan = {
 
 # ===== Daniela Espinoza =====
 reserved_daniela = {
-    'var' : 'VAR',
     'const' : 'CONST',
+    'String' : 'TIPO_STRING',
+    'Boolean' : 'TIPO_BOOLEAN',
     'null': 'NULL',
     'true': 'TRUE',
     'false': 'FALSE',
     'break': 'BREAK',
     'continue': 'CONTINUE',
     'class': 'CLASS',
-    'setOf': 'SETOF',
-    'mutableSetOf': 'MUTABLESETOF',
+    'Set': 'TIPO_SET',
+    'MutableSetOf': 'TIPO_MUTABLESET',
     'is': 'IS',
     'as': 'AS',
 }
@@ -139,6 +139,7 @@ tokens_alan = [
 tokens_daniela = [
     'STRING_LITERAL',
     'CHAR_LITERAL',
+    'QUESTION',
     'SAFE_CALL',        # ?.
     'ELVIS',            # ?:
     'NOT_NULL_ASSERT',  # !!
@@ -214,6 +215,7 @@ t_COMA = r","
 # ===== Daniela Espinoza =====
 t_ELVIS = r'\?:'
 t_SAFE_CALL = r'\?\.'
+t_QUESTION = r'\?' 
 t_NOT_NULL_ASSERT = r'!!'
 t_ARROW = r'->'
 
@@ -269,10 +271,6 @@ def t_ENTERO(t):
 # ===== Daniela Espinoza =====
 def t_STRING_LITERAL(t):
     r'\"([^\\\n]|(\\.))*?\"'
-    return t
-
-def t_CHAR_LITERAL(t):
-    r'\'([^\\\n]|(\\.))\''
     return t
 
 
