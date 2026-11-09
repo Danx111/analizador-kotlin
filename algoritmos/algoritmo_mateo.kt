@@ -1,45 +1,82 @@
-// Promedio de notas
+// Registro de notas de un curso
+// Lee las notas por teclado, calcula el promedio y clasifica a cada estudiante
 
 /* Algoritmo de prueba
    Mateo Andrade */
-const val NOTA_MINIMA = 7
+
+fun sumar(a: Int, b: Int): Int {
+    return a + b
+}
 
 fun promedio(notas: List<Int>): Double {
-    var suma = 0.0
+    var suma: Int = 0
     for (nota in notas) {
-        suma += nota
+        suma = sumar(suma, nota)
     }
-    return suma / notas.size
+    return suma.toDouble() / notas.size
+}
+
+fun clasificar(nota: Double): String {
+    if (nota >= 9.0) {
+        return "Excelente"
+    } else if (nota >= 7.0) {
+        return "Aprobado"
+    } else if (nota >= 5.0) {
+        return "Recuperacion"
+    } else {
+        return "Reprobado"
+    }
+}
+
+fun mostrarLista(titulo: String, valores: List<Int>) {
+    println(titulo)
+    for (valor in valores) {
+        print(valor)
+        print(" ")
+    }
+    println()
 }
 
 fun main() {
-    val notas = listOf(8, 6, 10)
-    var pendientes = mutableListOf(5, 9)
+    val curso = "Lenguajes de Programacion"
+    val paralelo = 1
+    val notaMaxima = 10.0
+    val bono = 0.5f
+    val poblacion = 1_000_000L
+    println("Curso: " + curso)
 
-    val poblacion = 1_000_000
-    val grande = 10L
-    val pi = 3.14
-    val precio = 2.5f
-    val dos = 2f
+    val estudiantes = mutableListOf("Ana", "Luis", "Sofia")
+    val notasAna = listOf(8, 9, 10)
+    val notasLuis = listOf(6, 5, 7)
+    val notasSofia = mutableListOf<Int>()
 
-    var total = (poblacion + grande) * 2 - pendientes.size / 4 % 3
-    total += 1
-    total -= 2
-    total *= 3
-    total /= 4
-    total %= 5
+    println("Ingrese la primera nota de Sofia:")
+    val primera = readln().toInt()
+    notasSofia.add(primera)
+    println("Ingrese la segunda nota de Sofia:")
+    val segunda = readLine()
+    notasSofia.add(9)
+    notasSofia[0] = primera + 1
 
-    for (i in 1..10) {
-        total = total + i
+    estudiantes.add("Pedro")
+    val cantidad = estudiantes.size
+
+    val promedioAna = promedio(notasAna)
+    val promedioLuis = promedio(notasLuis)
+    val promedioSofia = promedio(notasSofia)
+
+    println(clasificar(promedioAna))
+    println(clasificar(promedioLuis))
+    println(clasificar(promedioSofia))
+
+    val mejor = if (promedioAna > promedioLuis) "Ana" else "Luis"
+    val letra = if (promedioAna >= 9.0) 'A' else if (promedioAna >= 7.0) 'B' else 'C'
+
+    if (cantidad > 3 && promedioAna > 7.0) {
+        println("Curso completo y Ana aprobada")
     }
 
-    val resultado = promedio(notas)
-    if (resultado >= NOTA_MINIMA) {
-        println("Aprobado")
-    } else {
-        println("Reprobado")
-    }
-
-    val error = # @
-    /* comentario sin cerrar
+    mostrarLista("Notas de Ana:", notasAna)
+    println(mejor)
+    println(letra)
 }

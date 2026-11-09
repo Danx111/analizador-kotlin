@@ -1,0 +1,13 @@
+Análisis sintáctico - algoritmos/algoritmo_mateo_errores.kt
+Usuario: mateoandraded
+Fecha: 08/11/2026 19:04:47
+
+ERRORES LÉXICOS (0)
+
+ERRORES SINTÁCTICOS (6)
+Error sintáctico: token inesperado '+' (MAS) en la línea 4
+Error sintáctico: token inesperado '+' (MAS) en la línea 9
+Error sintáctico: token inesperado ')' (RPAREN) en la línea 11
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 15
+Error sintáctico: token inesperado 'Int' (TIPO_INT) en la línea 17
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 23
