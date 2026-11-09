@@ -23,6 +23,10 @@ from src.lexer import tokens
 precedence = (
     # Definir aquí de menor a mayor precedencia (left, right, nonassoc)
     # Ejemplos: conectores lógicos, operadores relacionales, suma/resta, mult/div, unarios
+    # Alan Aguilar (Aritmética)
+    ('left', 'MAS', 'MENOS'),
+    ('left', 'POR', 'DIVIDIDO', 'MODULO'),
+    ('right', 'UMENOS', 'INCREMENTO', 'DECREMENTO'),
 )
 
 
@@ -231,6 +235,31 @@ def p_tipo_mateo(p):
 # - Estructuras de datos: Map / MutableMap (mapOf, mutableMapOf, 'to')
 # - Funciones de expresión única (= directo) y parámetros por defecto
 # ==============================================================================
+
+# operaciones aritméticas binarias: + - * / %
+# la tabla precedence decide qué se agrupa primero (a + b * c = a + (b * c))
+def p_expresion_aritmetica(p):
+    """expresion : expresion MAS expresion
+                 | expresion MENOS expresion
+                 | expresion POR expresion
+                 | expresion DIVIDIDO expresion
+                 | expresion MODULO expresion"""
+
+
+# los paréntesis cambian el orden de evaluación
+def p_expresion_parentesis(p):
+    "expresion : LPAREN expresion RPAREN"
+
+
+# menos unario: -x, usa la precedencia de UMENOS y no la de la resta
+def p_expresion_negativo(p):
+    "expresion : MENOS expresion %prec UMENOS"
+
+
+# incremento y decremento en 1 (postfijo): x++, x--
+def p_expresion_incremento(p):
+    """expresion : expresion INCREMENTO
+                 | expresion DECREMENTO"""
 
 
 
