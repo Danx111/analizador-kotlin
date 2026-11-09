@@ -1,0 +1,9 @@
+Análisis sintáctico - algoritmos\algoritmo_daniela2.kt
+Usuario: danx111
+Fecha: 08/11/2026 22:42:51
+
+ERRORES LÉXICOS (0)
+
+ERRORES SINTÁCTICOS (2)
+Error sintáctico: token inesperado '=' (ASIGNAR) en la línea 35
+Error sintáctico: token inesperado '=' (ASIGNAR) en la línea 36

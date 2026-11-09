@@ -269,10 +269,6 @@ def p_expresion_daniela(p):
                  | lambda_expr"""
 
 
-# ------------------------------------------------------------------------------
-# Expresiones booleanas, comparación y rango
-# ------------------------------------------------------------------------------
-
 # operadores lógicos y de comparación
 def p_expresion_logica(p):
     """expresion : expresion AND expresion
@@ -295,10 +291,6 @@ def p_expresion_rango(p):
     "expresion : expresion RANGO expresion"
 
 
-# ------------------------------------------------------------------------------
-# Tipos: nullables, String, Boolean y Set / MutableSet
-# ------------------------------------------------------------------------------
-
 # un tipo nullable es un tipo normal seguido de ?
 def p_tipo_nullable(p):
     "tipo_nullable : tipo QUESTION"
@@ -313,9 +305,6 @@ def p_tipo_daniela(p):
             | TIPO_MUTABLESET MENOR tipo MAYOR
             | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
 
-# ------------------------------------------------------------------------------
-# Variables nullables y constantes
-# ------------------------------------------------------------------------------
 
 # var / val con tipo nullable, por ejemplo var apodo: String? = null
 def p_declaracion_nullable(p):
@@ -330,10 +319,6 @@ def p_declaracion_const(p):
                          | CONST VAL ID COLON tipo_nullable ASIGNAR expresion
                          | CONST VAL ID ASIGNAR expresion"""
 
-
-# ------------------------------------------------------------------------------
-# Null-safety: ?.  ?:  !!
-# ------------------------------------------------------------------------------
 
 # llamada segura, por ejemplo nombre?.length o nombre?.uppercase()
 def p_safe_call(p):
@@ -385,12 +370,12 @@ def p_salto(p):
 
 # creo conjuntos con setOf y mutableSetOf
 def p_conjunto(p):
-    """conjunto : TIPO_SETOF LPAREN RPAREN
-                | TIPO_SETOF LPAREN argumentos RPAREN
-                | TIPO_MUTABLESETOF LPAREN RPAREN
-                | TIPO_MUTABLESETOF LPAREN argumentos RPAREN
-                | TIPO_SETOF MENOR tipo MAYOR LPAREN RPAREN
-                | TIPO_MUTABLESETOF MENOR tipo MAYOR LPAREN RPAREN"""
+    """conjunto : SETOF LPAREN RPAREN
+                | SETOF LPAREN argumentos RPAREN
+                | MUTABLESETOF LPAREN RPAREN
+                | MUTABLESETOF LPAREN argumentos RPAREN
+                | SETOF MENOR tipo MAYOR LPAREN RPAREN
+                | MUTABLESETOF MENOR tipo MAYOR LPAREN RPAREN"""
 
 
 # ------------------------------------------------------------------------------

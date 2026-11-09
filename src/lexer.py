@@ -86,7 +86,9 @@ reserved_daniela = {
     'continue': 'CONTINUE',
     'class': 'CLASS',
     'Set': 'TIPO_SET',
-    'MutableSetOf': 'TIPO_MUTABLESET',
+    'MutableSet': 'TIPO_MUTABLESET',
+    'setOf': 'SETOF',
+    'mutableSetOf': 'MUTABLESETOF',
     'is': 'IS',
     'as': 'AS',
 }
