@@ -76,6 +76,7 @@ def p_expresion_valor(p):
                  | FLOTANTE
                  | STRING_LITERAL
                  | CHAR_LITERAL
+                 | CHAR
                  | TRUE
                  | FALSE
                  | NULL"""

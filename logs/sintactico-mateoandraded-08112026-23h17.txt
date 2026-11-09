@@ -1,0 +1,9 @@
+Análisis sintáctico - algoritmos/algoritmo_mateo.kt
+Usuario: mateoandraded
+Fecha: 08/11/2026 23:17:59
+
+ERRORES LÉXICOS (0)
+
+ERRORES SINTÁCTICOS (0)
+
+El programa es sintácticamente válido.
