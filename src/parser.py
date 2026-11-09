@@ -261,15 +261,48 @@ def p_expresion_incremento(p):
     """expresion : expresion INCREMENTO
                  | expresion DECREMENTO"""
 
-# sentencias de Alan: declaración de variable mutable
+# sentencias de Alan: declaración de variable mutable y estructura when
 def p_sentencia_alan(p):
-    """sentencia : declaracion_var"""
+    """sentencia : declaracion_var
+                 | when_stmt"""
 
 
 # declaración mutable con tipo explícito (var x: Tipo = ...)
 def p_declaracion_var(p):
     """declaracion_var : VAR ID COLON tipo ASIGNAR expresion
-                       | VAR ID COLON tipo ASIGNAR if_expresion"""
+                       | VAR ID COLON tipo ASIGNAR if_expresion
+                       | VAR ID COLON tipo ASIGNAR when_stmt"""
+
+
+# permite usar when como expresión en asignación val (val x = when (...) { ... })
+def p_declaracion_val_when(p):
+    "declaracion_val : VAL ID ASIGNAR when_stmt"
+
+
+# estructura de control when (con evaluación de expresiones o ramas múltiples)
+def p_when_stmt(p):
+    "when_stmt : WHEN LPAREN expresion RPAREN LLAVEIZQ ramas LLAVEDER"
+
+
+def p_ramas(p):
+    """ramas : rama
+             | ramas rama
+             | ramas SEMICOLON"""
+
+
+def p_rama(p):
+    """rama : valores ARROW cuerpo_rama
+            | ELSE ARROW cuerpo_rama"""
+
+
+def p_cuerpo_rama(p):
+    """cuerpo_rama : sentencia
+                   | bloque"""
+
+
+def p_valores(p):
+    """valores : expresion
+               | valores COMA expresion"""
 
 
 # expresiones de Alan
