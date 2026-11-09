@@ -268,6 +268,52 @@ def p_expresion_daniela(p):
     """expresion : conjunto
                  | lambda_expr"""
 
+
+# ------------------------------------------------------------------------------
+# Expresiones booleanas, comparación y rango
+# ------------------------------------------------------------------------------
+
+# operadores lógicos y de comparación
+def p_expresion_logica(p):
+    """expresion : expresion AND expresion
+                 | expresion OR expresion
+                 | expresion IGUAL expresion
+                 | expresion DIFERENTE expresion
+                 | expresion MENOR expresion
+                 | expresion MAYOR expresion
+                 | expresion MENORIGUAL expresion
+                 | expresion MAYORIGUAL expresion"""
+
+
+# negación lógica
+def p_expresion_not(p):
+    "expresion : NOT expresion"
+
+
+# rango, por ejemplo 1..10
+def p_expresion_rango(p):
+    "expresion : expresion RANGO expresion"
+
+
+# ------------------------------------------------------------------------------
+# Tipos: nullables, String, Boolean y Set / MutableSet
+# ------------------------------------------------------------------------------
+
+# un tipo nullable es un tipo normal seguido de ?
+def p_tipo_nullable(p):
+    "tipo_nullable : tipo QUESTION"
+
+
+# mis tipos: String, Boolean y conjuntos
+def p_tipo_daniela(p):
+    """tipo : TIPO_STRING
+            | TIPO_BOOLEAN
+            | TIPO_SET MENOR tipo MAYOR
+            | TIPO_SET MENOR tipo_nullable MAYOR
+            | TIPO_MUTABLESET MENOR tipo MAYOR
+            | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
+
+
 #---------------FIN DANIELA ESPINOZA--------------------------------------------
 
 # ==============================================================================
