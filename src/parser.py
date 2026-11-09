@@ -22,11 +22,18 @@ from src.lexer import tokens
 # ==============================================================================
 precedence = (
     # Definir aquí de menor a mayor precedencia (left, right, nonassoc)
-    # Ejemplos: conectores lógicos, operadores relacionales, suma/resta, mult/div, unarios
-    # Alan Aguilar (Aritmética)
+    # Daniela Espinoza (Lógica / Comparación / Rango)
+    ('left', 'OR'),
+    ('left', 'AND'),
+    ('nonassoc', 'IGUAL', 'DIFERENTE'),
+    ('nonassoc', 'MENOR', 'MAYOR', 'MENORIGUAL', 'MAYORIGUAL'),
+    ('left', 'ELVIS'),                          # ?:
+    ('nonassoc', 'RANGO'),                      # ..
+    # Alan Aguilar (Aritmética binaria y unarios)
     ('left', 'MAS', 'MENOS'),
     ('left', 'POR', 'DIVIDIDO', 'MODULO'),
-    ('right', 'UMENOS', 'INCREMENTO', 'DECREMENTO'),
+    ('right', 'NOT', 'UMENOS'),                 # operadores unarios
+    ('left', 'SAFE_CALL', 'NOT_NULL_ASSERT', 'INCREMENTO', 'DECREMENTO'), # postfijos
 )
 
 
@@ -360,9 +367,165 @@ def p_parametro_defecto(p):
 # - Estructuras de datos: Set / MutableSet (setOf, mutableSetOf)
 # - Funciones lambda ({ param -> cuerpo })
 # ==============================================================================
+# agrego mis sentencias al programa
+def p_sentencia_daniela(p):
+    """sentencia : declaracion_nullable
+                 | declaracion_const
+                 | ciclo_while
+                 | ciclo_for
+                 | salto"""
 
 
+# agrego mis expresiones al programa
+def p_expresion_daniela(p):
+    """expresion : conjunto
+                 | lambda_expr"""
 
+
+# ------------------------------------------------------------------------------
+# Expresiones booleanas, comparación y rango
+# ------------------------------------------------------------------------------
+
+# operadores lógicos y de comparación
+def p_expresion_logica(p):
+    """expresion : expresion AND expresion
+                 | expresion OR expresion
+                 | expresion IGUAL expresion
+                 | expresion DIFERENTE expresion
+                 | expresion MENOR expresion
+                 | expresion MAYOR expresion
+                 | expresion MENORIGUAL expresion
+                 | expresion MAYORIGUAL expresion"""
+
+
+# negación lógica
+def p_expresion_not(p):
+    "expresion : NOT expresion"
+
+
+# rango, por ejemplo 1..10
+def p_expresion_rango(p):
+    "expresion : expresion RANGO expresion"
+
+
+# ------------------------------------------------------------------------------
+# Tipos: nullables, String, Boolean y Set / MutableSet
+# ------------------------------------------------------------------------------
+
+# un tipo nullable es un tipo normal seguido de ?
+def p_tipo_nullable(p):
+    "tipo_nullable : tipo QUESTION"
+
+
+# mis tipos: String, Boolean y conjuntos
+def p_tipo_daniela(p):
+    """tipo : TIPO_STRING
+            | TIPO_BOOLEAN
+            | TIPO_SET MENOR tipo MAYOR
+            | TIPO_SET MENOR tipo_nullable MAYOR
+            | TIPO_MUTABLESET MENOR tipo MAYOR
+            | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
+
+# ------------------------------------------------------------------------------
+# Variables nullables y constantes
+# ------------------------------------------------------------------------------
+
+# var / val con tipo nullable, por ejemplo var apodo: String? = null
+def p_declaracion_nullable(p):
+    """declaracion_nullable : VAR ID COLON tipo_nullable ASIGNAR expresion
+                            | VAL ID COLON tipo_nullable ASIGNAR expresion
+                            | VAR ID COLON tipo_nullable"""
+
+
+# constantes, por ejemplo const val MAX: Int = 10
+def p_declaracion_const(p):
+    """declaracion_const : CONST VAL ID COLON tipo ASIGNAR expresion
+                         | CONST VAL ID COLON tipo_nullable ASIGNAR expresion
+                         | CONST VAL ID ASIGNAR expresion"""
+
+
+# ------------------------------------------------------------------------------
+# Null-safety: ?.  ?:  !!
+# ------------------------------------------------------------------------------
+
+# llamada segura, por ejemplo nombre?.length o nombre?.uppercase()
+def p_safe_call(p):
+    """expresion : expresion SAFE_CALL ID
+                 | expresion SAFE_CALL ID LPAREN RPAREN
+                 | expresion SAFE_CALL ID LPAREN argumentos RPAREN"""
+
+
+# operador elvis, por ejemplo nombre ?: "sin nombre"
+def p_elvis(p):
+    "expresion : expresion ELVIS expresion"
+
+
+# aserción de no nulo, por ejemplo nombre!!
+def p_not_null_assert(p):
+    "expresion : expresion NOT_NULL_ASSERT"
+
+
+# aserción de no nulo seguida de acceso, por ejemplo nombre!!.length
+def p_not_null_miembro(p):
+    """expresion : expresion NOT_NULL_ASSERT DOT ID
+                 | expresion NOT_NULL_ASSERT DOT ID LPAREN RPAREN
+                 | expresion NOT_NULL_ASSERT DOT ID LPAREN argumentos RPAREN"""
+
+
+# ------------------------------------------------------------------------------
+# Ciclos: while y for (rango / colección)
+# ------------------------------------------------------------------------------
+
+# while con condición y bloque
+def p_ciclo_while(p):
+    "ciclo_while : WHILE LPAREN expresion RPAREN bloque"
+
+
+# for sobre rango (1..10) o colección (lista): ambos son una expresion
+def p_ciclo_for(p):
+    "ciclo_for : FOR LPAREN ID IN expresion RPAREN bloque"
+
+
+# break y continue dentro de los ciclos
+def p_salto(p):
+    """salto : BREAK
+             | CONTINUE"""
+
+
+# ------------------------------------------------------------------------------
+# Set / MutableSet
+# ------------------------------------------------------------------------------
+
+# creo conjuntos con setOf y mutableSetOf
+def p_conjunto(p):
+    """conjunto : TIPO_SETOF LPAREN RPAREN
+                | TIPO_SETOF LPAREN argumentos RPAREN
+                | TIPO_MUTABLESETOF LPAREN RPAREN
+                | TIPO_MUTABLESETOF LPAREN argumentos RPAREN
+                | TIPO_SETOF MENOR tipo MAYOR LPAREN RPAREN
+                | TIPO_MUTABLESETOF MENOR tipo MAYOR LPAREN RPAREN"""
+
+
+# ------------------------------------------------------------------------------
+# Lambdas: { a: Int, b: Int -> a + b }
+# ------------------------------------------------------------------------------
+
+# lambda con parámetros y cuerpo, se puede asignar con val f = { ... }
+def p_lambda(p):
+    "lambda_expr : LLAVEIZQ parametros_lambda ARROW sentencias LLAVEDER"
+
+
+def p_parametros_lambda(p):
+    """parametros_lambda : parametro_lambda
+                         | parametros_lambda COMA parametro_lambda"""
+
+
+# parámetro con tipo, tipo nullable, o sin tipo ({ x -> x * 2 })
+def p_parametro_lambda(p):
+    """parametro_lambda : ID COLON tipo
+                        | ID COLON tipo_nullable
+                        | ID"""
+#---------------FIN DANIELA ESPINOZA--------------------------------------------
 
 # ==============================================================================
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
