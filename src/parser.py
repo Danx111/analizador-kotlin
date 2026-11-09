@@ -88,6 +88,67 @@ def p_empty(p):
 # - Funciones con bloque, parámetros formales y tipo de retorno
 # ==============================================================================
 
+# agrego mis sentencias al programa
+def p_sentencia_mateo(p):
+    """sentencia : impresion
+                 | declaracion_val
+                 | reasignacion
+                 | condicional"""
+
+
+# agrego mis expresiones al programa
+def p_expresion_mateo(p):
+    "expresion : lectura"
+
+
+# imprimo con println o print
+def p_impresion(p):
+    """impresion : PRINTLN LPAREN expresion RPAREN
+                 | PRINTLN LPAREN RPAREN
+                 | PRINT LPAREN expresion RPAREN"""
+
+
+# leo datos del teclado con readLine o readln
+def p_lectura(p):
+    """lectura : READLINE LPAREN RPAREN
+               | READLN LPAREN RPAREN"""
+
+
+# declaro un val sin tipo y kotlin lo deduce solo
+def p_declaracion_val(p):
+    """declaracion_val : VAL ID ASIGNAR expresion
+                       | VAL ID ASIGNAR if_expresion"""
+
+
+# cambio el valor de una variable o de una posición de la lista
+def p_reasignacion(p):
+    "reasignacion : ID operador_asignacion expresion"
+
+
+def p_operador_asignacion(p):
+    """operador_asignacion : ASIGNAR
+                           | MAS_ASIGNAR
+                           | MENOS_ASIGNAR
+                           | POR_ASIGNAR
+                           | DIVIDIDO_ASIGNAR
+                           | MODULO_ASIGNAR"""
+
+
+# if, else if y else con bloques
+def p_condicional(p):
+    """condicional : IF LPAREN expresion RPAREN bloque
+                   | IF LPAREN expresion RPAREN bloque ELSE bloque
+                   | IF LPAREN expresion RPAREN bloque ELSE condicional"""
+
+
+# if usado como valor, por ejemplo val letra = if (x) 'A' else 'B'
+def p_if_expresion(p):
+    """if_expresion : IF LPAREN expresion RPAREN expresion ELSE expresion
+                    | IF LPAREN expresion RPAREN expresion ELSE if_expresion"""
+
+
+
+
 # ==============================================================================
 # BLOQUE 2: ALAN AGUILAR
 # - Expresiones aritméticas completas (binarias, unarias, paréntesis)
