@@ -9,6 +9,7 @@ Integrantes:
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
 import ply.yacc as yacc
 
@@ -30,10 +31,52 @@ precedence = (
 # Responsable: Integración Conjunta
 # ==============================================================================
 
-# p_programa: punto de entrada con la secuencia de sentencias o declaraciones
-# p_sentencias: lista de sentencias recursivas (sentencia sentencias | empty)
-# p_sentencia: engloba expresiones, declaraciones, estructuras de control, etc.
-# p_empty: regla auxiliar épsilon
+start = "programa"
+
+
+# el programa es una lista de sentencias
+def p_programa(p):
+    "programa : sentencias"
+
+
+# las sentencias se repiten una tras otra y el punto y coma es opcional
+def p_sentencias(p):
+    """sentencias : sentencias sentencia
+                  | sentencias SEMICOLON
+                  | empty"""
+
+
+# un bloque son sentencias entre llaves
+def p_bloque(p):
+    "bloque : LLAVEIZQ sentencias LLAVEDER"
+
+
+# una expresión sola también es una sentencia, por ejemplo una llamada
+def p_sentencia_expresion(p):
+    "sentencia : expresion"
+
+
+# los valores más simples que puede tener una expresión
+def p_expresion_valor(p):
+    """expresion : ID
+                 | ENTERO
+                 | ENTERO_LARGO
+                 | DECIMAL
+                 | FLOTANTE
+                 | STRING_LITERAL
+                 | CHAR_LITERAL
+                 | TRUE
+                 | FALSE
+                 | NULL"""
+
+
+# un tipo también puede ser el nombre de una clase
+def p_tipo_nombre(p):
+    "tipo : ID"
+
+
+def p_empty(p):
+    "empty :"
 
 
 # ==============================================================================
@@ -44,9 +87,6 @@ precedence = (
 # - Estructuras de datos: List / MutableList (listOf, mutableListOf)
 # - Funciones con bloque, parámetros formales y tipo de retorno
 # ==============================================================================
-
-
-
 
 # ==============================================================================
 # BLOQUE 2: ALAN AGUILAR
@@ -77,6 +117,64 @@ precedence = (
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
 # ==============================================================================
 
-# p_error: funcion obligatoria de PLY para capturar y reportar errores de sintaxis
-# generar_log_sintactico: formatear y guardar lexico-sintactico-Usuario-fecha.txt
-# ejecucion principal (__main__): parseo de archivos .kt mediante argumentos por consola
+CARPETA_LOGS = Path(__file__).resolve().parents[1] / "logs"
+errores_sintacticos = []
+
+
+# guardo cada error con el token y la línea donde pasó
+def p_error(p):
+    if p:
+        errores_sintacticos.append(
+            f"Error sintáctico: token inesperado '{p.value}' ({p.type}) en la línea {p.lineno}"
+        )
+    else:
+        errores_sintacticos.append("Error sintáctico: el código terminó antes de tiempo")
+
+
+parser = yacc.yacc(debug=False, write_tables=False)
+
+
+def analizar(codigo):
+    from src.lexer import construir_lexer
+
+    errores_sintacticos.clear()
+    lexer = construir_lexer()
+    parser.parse(codigo, lexer=lexer)
+    return lexer.errores, list(errores_sintacticos)
+
+
+def generar_log_sintactico(usuario, errores_lexicos, errores, archivo_fuente=""):
+    CARPETA_LOGS.mkdir(exist_ok=True)
+    fecha = datetime.now().strftime("%d%m%Y-%Hh%M")
+    ruta = CARPETA_LOGS / f"sintactico-{usuario}-{fecha}.txt"
+
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write(f"Análisis sintáctico - {archivo_fuente}\n")
+        f.write(f"Usuario: {usuario}\n")
+        f.write(f"Fecha: {datetime.now():%d/%m/%Y %H:%M:%S}\n\n")
+        f.write(f"ERRORES LÉXICOS ({len(errores_lexicos)})\n")
+        for err in errores_lexicos:
+            f.write(f"{err}\n")
+        f.write(f"\nERRORES SINTÁCTICOS ({len(errores)})\n")
+        for err in errores:
+            f.write(f"{err}\n")
+        if not errores_lexicos and not errores:
+            f.write("\nEl programa es sintácticamente válido.\n")
+    return ruta
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Uso: python -m src.parser <archivo.kt> <usuario_github>")
+        sys.exit(1)
+
+    archivo, usuario = sys.argv[1], sys.argv[2]
+    with open(archivo, encoding="utf-8-sig") as f:
+        codigo = f.read()
+
+    errores_lexicos, errores = analizar(codigo)
+    for err in errores_lexicos + errores:
+        print(err)
+    if not errores_lexicos and not errores:
+        print("El programa es sintácticamente válido.")
+    print(f"\nLog guardado en: {generar_log_sintactico(usuario, errores_lexicos, errores, archivo)}")
