@@ -48,6 +48,7 @@ start = "programa"
 # el programa es una lista de sentencias
 def p_programa(p):
     "programa : sentencias"
+    p[0] = p[1]
 
 
 # las sentencias se repiten una tras otra y el punto y coma es opcional
@@ -55,17 +56,23 @@ def p_sentencias(p):
     """sentencias : sentencias sentencia
                   | sentencias SEMICOLON
                   | empty"""
-
+    if len(p) == 3 and p[2] != ";":
+        p[0] = p[1] + [p[2]]
+    elif len(p) == 3:
+        p[0] = p[1]
+    else:
+        p[0] = []
 
 # un bloque son sentencias entre llaves
 def p_bloque(p):
     "bloque : LLAVEIZQ sentencias LLAVEDER"
+    p[0] = ("bloque", p[2])
 
 
 # una expresión sola también es una sentencia, por ejemplo una llamada
 def p_sentencia_expresion(p):
     "sentencia : expresion"
-
+    p[0] = p[1]
 
 # los valores más simples que puede tener una expresión
 def p_expresion_valor(p):
@@ -80,6 +87,7 @@ def p_expresion_valor(p):
                  | TRUE
                  | FALSE
                  | NULL"""
+    p[0] = ("literal", p.slice[1].type, p[1], p.lineno(1))
     if p.slice[1].type == "ID":
         verificar_uso(p[1], p.lexpos(1), p.lineno(1))
 
@@ -87,6 +95,7 @@ def p_expresion_valor(p):
 # un tipo también puede ser el nombre de una clase
 def p_tipo_nombre(p):
     "tipo : ID"
+    p[0] = p[1]
 
 
 def p_empty(p):
@@ -110,7 +119,7 @@ def p_sentencia_mateo(p):
                  | condicional
                  | funcion
                  | retorno"""
-
+    p[0] = p[1]
 
 # agrego mis expresiones al programa
 def p_expresion_mateo(p):
@@ -119,7 +128,7 @@ def p_expresion_mateo(p):
                  | acceso_lista
                  | acceso_miembro
                  | llamada_funcion"""
-
+    p[0] = p[1]
 
 # imprimo con println o print
 def p_impresion(p):
@@ -138,7 +147,7 @@ def p_lectura(p):
 def p_declaracion_val(p):
     """declaracion_val : VAL ID ASIGNAR expresion
                        | VAL ID ASIGNAR if_expresion"""
-
+    p[0] = ("val", p[2], p[4], p.lineno(1))
 
 # cambio el valor de una variable o de una posición de la lista
 def p_reasignacion(p):
@@ -162,6 +171,8 @@ def p_condicional(p):
     """condicional : IF LPAREN expresion RPAREN bloque
                    | IF LPAREN expresion RPAREN bloque ELSE bloque
                    | IF LPAREN expresion RPAREN bloque ELSE condicional"""
+    rama_else = p[7] if len(p) == 8 else None
+    p[0] = ("if", p[3], p[5], rama_else, p.lineno(1))
 
 
 # if usado como valor, por ejemplo val letra = if (x) 'A' else 'B'
@@ -206,6 +217,14 @@ def p_funcion(p):
                | FUN ID LPAREN RPAREN COLON tipo bloque
                | FUN ID LPAREN parametros RPAREN bloque
                | FUN ID LPAREN RPAREN bloque"""
+    if len(p) == 9:    # con params y tipo retorno
+        p[0] = ("funcion", p[2], p[4], p[7], p[8], p.lineno(1))
+    elif len(p) == 8:  # sin params, con tipo retorno
+        p[0] = ("funcion", p[2], [], p[6], p[7], p.lineno(1))
+    elif len(p) == 7:  # con params, sin tipo retorno 
+        p[0] = ("funcion", p[2], p[4], "Unit", p[6], p.lineno(1))
+    else:              # sin params, sin tipo retorno 
+        p[0] = ("funcion", p[2], [], "Unit", p[5], p.lineno(1))
 
 
 def p_parametros(p):
@@ -222,6 +241,8 @@ def p_parametro(p):
 def p_retorno(p):
     """retorno : RETURN expresion
                | RETURN"""
+    expr = p[2] if len(p) == 3 else None
+    p[0] = ("return", expr, p.lineno(1))
 
 
 # llamo a una función, por ejemplo sumar(2, 3)
@@ -239,7 +260,7 @@ def p_tipo_mateo(p):
             | TIPO_FLOAT
             | TIPO_LIST MENOR tipo MAYOR
             | TIPO_MUTABLELIST MENOR tipo MAYOR"""
-
+    p[0] = p[1]
 
 
 
@@ -281,7 +302,7 @@ def p_expresion_incremento(p):
 def p_sentencia_alan(p):
     """sentencia : declaracion_var
                  | when_stmt"""
-
+    p[0] = p[1]
 
 # declaración mutable con tipo explícito (var x: Tipo = ...)
 def p_declaracion_var(p):
@@ -383,13 +404,13 @@ def p_sentencia_daniela(p):
                  | ciclo_while
                  | ciclo_for
                  | salto"""
-
+    p[0] = p[1]
 
 # agrego mis expresiones al programa
 def p_expresion_daniela(p):
     """expresion : conjunto
                  | lambda_expr"""
-
+    p[0] = p[1]
 
 # operadores lógicos y de comparación
 def p_expresion_logica(p):
@@ -401,11 +422,13 @@ def p_expresion_logica(p):
                  | expresion MAYOR expresion
                  | expresion MENORIGUAL expresion
                  | expresion MAYORIGUAL expresion"""
+    p[0] = ("comparacion", p[2], p[1], p[3], p.lineno(2))
 
 
 # negación lógica
 def p_expresion_not(p):
     "expresion : NOT expresion"
+    p[0] = ("not", p[2], p.lineno(1))
 
 
 # rango, por ejemplo 1..10
@@ -426,6 +449,7 @@ def p_tipo_daniela(p):
             | TIPO_SET MENOR tipo_nullable MAYOR
             | TIPO_MUTABLESET MENOR tipo MAYOR
             | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
+    p[0] = p[1]
 
 
 # var / val con tipo nullable, por ejemplo var apodo: String? = null
@@ -475,18 +499,18 @@ def p_not_null_miembro(p):
 # while con condición y bloque
 def p_ciclo_while(p):
     "ciclo_while : WHILE LPAREN expresion RPAREN bloque"
-
+    p[0] = ("while", p[3], p[5], p.lineno(1))
 
 # for sobre rango (1..10) o colección (lista): ambos son una expresion
 def p_ciclo_for(p):
     "ciclo_for : FOR LPAREN ID IN expresion RPAREN bloque"
-
+    p[0] = ("for", p[3], p[5], p[7], p.lineno(1))
 
 # break y continue dentro de los ciclos
 def p_salto(p):
     """salto : BREAK
              | CONTINUE"""
-
+    p[0] = ("salto", p[1], p.lineno(1))
 
 # ------------------------------------------------------------------------------
 # Set / MutableSet
@@ -659,6 +683,139 @@ def verificar_reasignacion(nombre, posicion, linea):
 
 # ===== Fin reglas semánticas Mateo Andrade =====
 
+
+# ==============================================================================
+# REGLAS SEMÁNTICAS: DANIELA ESPINOZA
+# - Retorno de funciones: el tipo en return debe coincidir con el declarado
+# - Estructuras de control: break/continue solo en bucles; condición Boolean
+# ==============================================================================
+pila_funciones = []
+profundidad_bucle = 0
+tipos_variables = {}
+
+def inferir_tipo_daniela(nodo):
+    if nodo is None:
+        return "Unit"
+    if not isinstance(nodo, tuple):
+        return "Desconocido"
+
+    etiqueta = nodo[0]
+    if etiqueta == "literal":
+        _, tipo_tok, valor, _ = nodo
+        mapa = {
+            "ENTERO": "Int",
+            "ENTERO_LARGO": "Long",
+            "DECIMAL": "Double",
+            "FLOTANTE": "Float",
+            "STRING_LITERAL": "String",
+            "CHAR_LITERAL": "Char",
+            "CHAR": "Char",
+            "TRUE": "Boolean",
+            "FALSE": "Boolean",
+            "NULL": "Null",
+        }
+        if tipo_tok == "ID":
+            return tipos_variables.get(valor, "Desconocido")
+        return mapa.get(tipo_tok, "Desconocido")
+
+    if etiqueta in ("comparacion", "not"):
+        return "Boolean"
+
+    return "Desconocido"
+
+
+def verificar_ast_daniela(nodo):
+    global profundidad_bucle
+
+    if nodo is None:
+        return
+    if isinstance(nodo, list):
+        for item in nodo:
+            verificar_ast_daniela(item)
+        return
+    if not isinstance(nodo, tuple):
+        return
+
+    etiqueta = nodo[0]
+
+    if etiqueta == "bloque":
+        guardado = dict(tipos_variables)       
+        verificar_ast_daniela(nodo[1])
+        tipos_variables.clear()
+        tipos_variables.update(guardado)
+
+    elif etiqueta == "val":
+        # ('val', nombre, expr, linea)
+        _, nombre, expr, _ = nodo
+        tipos_variables[nombre] = inferir_tipo_daniela(expr)
+
+    # --- REGLA 1: Retorno de funciones ---
+    elif etiqueta == "funcion":
+        # ('funcion', nombre, params, tipo_retorno, bloque, linea)
+        _, nombre, _, tipo_retorno, bloque, _ = nodo
+        pila_funciones.append((nombre, tipo_retorno))
+        verificar_ast_daniela(bloque)
+        pila_funciones.pop()
+
+    elif etiqueta == "return":
+        # ('return', expr, linea)
+        _, expr, linea = nodo
+        if not pila_funciones:
+            error_semantico("Retorno", "'return' fuera de una función", linea)
+            return
+        nombre_fn, tipo_esperado = pila_funciones[-1]
+        tipo_retornado = inferir_tipo_daniela(expr)
+        if tipo_retornado != "Desconocido" and tipo_esperado != tipo_retornado:
+            error_semantico(
+                "Retorno",
+                f"'{nombre_fn}' debe retornar {tipo_esperado} y retorna {tipo_retornado}",
+                linea,
+            )
+
+# --- REGLA 2: Estructuras de control (bucles y condición Boolean) ---
+    elif etiqueta == "while":
+        # ('while', condicion, bloque, linea)
+        _, condicion, bloque, linea = nodo
+        tipo_cond = inferir_tipo_daniela(condicion)
+        if tipo_cond not in ("Boolean", "Desconocido"):
+            error_semantico(
+                "Control",
+                f"la condición de 'while' debe ser Boolean y es {tipo_cond}",
+                linea,
+            )
+        profundidad_bucle += 1
+        verificar_ast_daniela(bloque)
+        profundidad_bucle -= 1
+
+    elif etiqueta == "for":
+        # ('for', var_iter, iterable, bloque, linea)
+        _, _, _, bloque, _ = nodo
+        profundidad_bucle += 1
+        verificar_ast_daniela(bloque)
+        profundidad_bucle -= 1
+
+    elif etiqueta == "if":
+        # ('if', condicion, bloque_if, bloque_else, linea)
+        _, condicion, bloque_if, bloque_else, linea = nodo
+        tipo_cond = inferir_tipo_daniela(condicion)
+        if tipo_cond not in ("Boolean", "Desconocido"):
+            error_semantico(
+                "Control",
+                f"la condición de 'if' debe ser Boolean y es {tipo_cond}",
+                linea,
+            )
+        verificar_ast_daniela(bloque_if)
+        if bloque_else is not None:
+            verificar_ast_daniela(bloque_else)
+
+    elif etiqueta == "salto":
+        # ('salto', palabra, linea)
+        _, palabra, linea = nodo
+        if profundidad_bucle == 0:
+            error_semantico("Control", f"'{palabra}' fuera de un bucle", linea)
+
+# ===== Fin reglas semánticas Daniela Espinoza =====
+
 # ==============================================================================
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
 # ==============================================================================
@@ -685,9 +842,17 @@ def analizar(codigo):
 
     errores_sintacticos.clear()
     errores_semanticos.clear()
+    pila_funciones.clear()
+    tipos_variables.clear()
+    global profundidad_bucle
+    profundidad_bucle = 0
+    
     preparar_tabla_simbolos(codigo)
     lexer = construir_lexer()
-    parser.parse(codigo, lexer=lexer)
+    ast = parser.parse(codigo, lexer=lexer)
+
+    if not lexer.errores and not errores_sintacticos and ast is not None:
+        verificar_ast_daniela(ast)
     return lexer.errores, list(errores_sintacticos)
 
 
