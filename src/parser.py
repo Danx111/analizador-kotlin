@@ -119,7 +119,7 @@ def p_sentencia_mateo(p):
                  | condicional
                  | funcion
                  | retorno"""
-
+    p[0] = p[1]
 
 # agrego mis expresiones al programa
 def p_expresion_mateo(p):
@@ -128,7 +128,7 @@ def p_expresion_mateo(p):
                  | acceso_lista
                  | acceso_miembro
                  | llamada_funcion"""
-
+    p[0] = p[1]
 
 # imprimo con println o print
 def p_impresion(p):
@@ -147,7 +147,7 @@ def p_lectura(p):
 def p_declaracion_val(p):
     """declaracion_val : VAL ID ASIGNAR expresion
                        | VAL ID ASIGNAR if_expresion"""
-
+    p[0] = ("val", p[2], p[4], p.lineno(1))
 
 # cambio el valor de una variable o de una posición de la lista
 def p_reasignacion(p):
@@ -302,7 +302,7 @@ def p_expresion_incremento(p):
 def p_sentencia_alan(p):
     """sentencia : declaracion_var
                  | when_stmt"""
-
+    p[0] = p[1]
 
 # declaración mutable con tipo explícito (var x: Tipo = ...)
 def p_declaracion_var(p):
@@ -404,13 +404,13 @@ def p_sentencia_daniela(p):
                  | ciclo_while
                  | ciclo_for
                  | salto"""
-
+    p[0] = p[1]
 
 # agrego mis expresiones al programa
 def p_expresion_daniela(p):
     """expresion : conjunto
                  | lambda_expr"""
-
+    p[0] = p[1]
 
 # operadores lógicos y de comparación
 def p_expresion_logica(p):
@@ -691,7 +691,7 @@ def verificar_reasignacion(nombre, posicion, linea):
 # ==============================================================================
 pila_funciones = []
 profundidad_bucle = 0
-
+tipos_variables = {}
 
 def inferir_tipo_daniela(nodo):
     if nodo is None:
@@ -714,6 +714,8 @@ def inferir_tipo_daniela(nodo):
             "FALSE": "Boolean",
             "NULL": "Null",
         }
+        if tipo_tok == "ID":
+            return tipos_variables.get(valor, "Desconocido")
         return mapa.get(tipo_tok, "Desconocido")
 
     if etiqueta in ("comparacion", "not"):
@@ -737,7 +739,15 @@ def verificar_ast_daniela(nodo):
     etiqueta = nodo[0]
 
     if etiqueta == "bloque":
+        guardado = dict(tipos_variables)       
         verificar_ast_daniela(nodo[1])
+        tipos_variables.clear()
+        tipos_variables.update(guardado)
+
+    elif etiqueta == "val":
+        # ('val', nombre, expr, linea)
+        _, nombre, expr, _ = nodo
+        tipos_variables[nombre] = inferir_tipo_daniela(expr)
 
     # --- REGLA 1: Retorno de funciones ---
     elif etiqueta == "funcion":
@@ -762,6 +772,49 @@ def verificar_ast_daniela(nodo):
                 linea,
             )
 
+# --- REGLA 2: Estructuras de control (bucles y condición Boolean) ---
+    elif etiqueta == "while":
+        # ('while', condicion, bloque, linea)
+        _, condicion, bloque, linea = nodo
+        tipo_cond = inferir_tipo_daniela(condicion)
+        if tipo_cond not in ("Boolean", "Desconocido"):
+            error_semantico(
+                "Control",
+                f"la condición de 'while' debe ser Boolean y es {tipo_cond}",
+                linea,
+            )
+        profundidad_bucle += 1
+        verificar_ast_daniela(bloque)
+        profundidad_bucle -= 1
+
+    elif etiqueta == "for":
+        # ('for', var_iter, iterable, bloque, linea)
+        _, _, _, bloque, _ = nodo
+        profundidad_bucle += 1
+        verificar_ast_daniela(bloque)
+        profundidad_bucle -= 1
+
+    elif etiqueta == "if":
+        # ('if', condicion, bloque_if, bloque_else, linea)
+        _, condicion, bloque_if, bloque_else, linea = nodo
+        tipo_cond = inferir_tipo_daniela(condicion)
+        if tipo_cond not in ("Boolean", "Desconocido"):
+            error_semantico(
+                "Control",
+                f"la condición de 'if' debe ser Boolean y es {tipo_cond}",
+                linea,
+            )
+        verificar_ast_daniela(bloque_if)
+        if bloque_else is not None:
+            verificar_ast_daniela(bloque_else)
+
+    elif etiqueta == "salto":
+        # ('salto', palabra, linea)
+        _, palabra, linea = nodo
+        if profundidad_bucle == 0:
+            error_semantico("Control", f"'{palabra}' fuera de un bucle", linea)
+
+# ===== Fin reglas semánticas Daniela Espinoza =====
 
 # ==============================================================================
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
@@ -789,9 +842,16 @@ def analizar(codigo):
 
     errores_sintacticos.clear()
     errores_semanticos.clear()
+    pila_funciones.clear()
+    global profundidad_bucle
+    profundidad_bucle = 0
+    
     preparar_tabla_simbolos(codigo)
     lexer = construir_lexer()
-    parser.parse(codigo, lexer=lexer)
+    ast = parser.parse(codigo, lexer=lexer)
+
+    if not lexer.errores and not errores_sintacticos and ast is not None:
+        verificar_ast_daniela(ast)
     return lexer.errores, list(errores_sintacticos)
 
 
