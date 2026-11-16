@@ -48,6 +48,7 @@ start = "programa"
 # el programa es una lista de sentencias
 def p_programa(p):
     "programa : sentencias"
+    p[0] = p[1]
 
 
 # las sentencias se repiten una tras otra y el punto y coma es opcional
@@ -55,17 +56,23 @@ def p_sentencias(p):
     """sentencias : sentencias sentencia
                   | sentencias SEMICOLON
                   | empty"""
-
+    if len(p) == 3 and p[2] != ";":
+        p[0] = p[1] + [p[2]]
+    elif len(p) == 3:
+        p[0] = p[1]
+    else:
+        p[0] = []
 
 # un bloque son sentencias entre llaves
 def p_bloque(p):
     "bloque : LLAVEIZQ sentencias LLAVEDER"
+    p[0] = ("bloque", p[2])
 
 
 # una expresión sola también es una sentencia, por ejemplo una llamada
 def p_sentencia_expresion(p):
     "sentencia : expresion"
-
+    p[0] = p[1]
 
 # los valores más simples que puede tener una expresión
 def p_expresion_valor(p):
@@ -80,11 +87,12 @@ def p_expresion_valor(p):
                  | TRUE
                  | FALSE
                  | NULL"""
-
+    p[0] = ("literal", p.slice[1].type, p[1], p.lineno(1))
 
 # un tipo también puede ser el nombre de una clase
 def p_tipo_nombre(p):
     "tipo : ID"
+    p[0] = p[1]
 
 
 def p_empty(p):
@@ -158,6 +166,8 @@ def p_condicional(p):
     """condicional : IF LPAREN expresion RPAREN bloque
                    | IF LPAREN expresion RPAREN bloque ELSE bloque
                    | IF LPAREN expresion RPAREN bloque ELSE condicional"""
+    rama_else = p[7] if len(p) == 8 else None
+    p[0] = ("if", p[3], p[5], rama_else, p.lineno(1))
 
 
 # if usado como valor, por ejemplo val letra = if (x) 'A' else 'B'
@@ -199,6 +209,14 @@ def p_funcion(p):
                | FUN ID LPAREN RPAREN COLON tipo bloque
                | FUN ID LPAREN parametros RPAREN bloque
                | FUN ID LPAREN RPAREN bloque"""
+    if len(p) == 9:    # con params y tipo retorno
+        p[0] = ("funcion", p[2], p[4], p[7], p[8], p.lineno(1))
+    elif len(p) == 8:  # sin params, con tipo retorno
+        p[0] = ("funcion", p[2], [], p[6], p[7], p.lineno(1))
+    elif len(p) == 7:  # con params, sin tipo retorno 
+        p[0] = ("funcion", p[2], p[4], "Unit", p[6], p.lineno(1))
+    else:              # sin params, sin tipo retorno 
+        p[0] = ("funcion", p[2], [], "Unit", p[5], p.lineno(1))
 
 
 def p_parametros(p):
@@ -215,6 +233,8 @@ def p_parametro(p):
 def p_retorno(p):
     """retorno : RETURN expresion
                | RETURN"""
+    expr = p[2] if len(p) == 3 else None
+    p[0] = ("return", expr, p.lineno(1))
 
 
 # llamo a una función, por ejemplo sumar(2, 3)
@@ -231,7 +251,7 @@ def p_tipo_mateo(p):
             | TIPO_FLOAT
             | TIPO_LIST MENOR tipo MAYOR
             | TIPO_MUTABLELIST MENOR tipo MAYOR"""
-
+    p[0] = p[1]
 
 
 
@@ -418,6 +438,7 @@ def p_tipo_daniela(p):
             | TIPO_SET MENOR tipo_nullable MAYOR
             | TIPO_MUTABLESET MENOR tipo MAYOR
             | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
+    p[0] = p[1]
 
 
 # var / val con tipo nullable, por ejemplo var apodo: String? = null
@@ -467,18 +488,18 @@ def p_not_null_miembro(p):
 # while con condición y bloque
 def p_ciclo_while(p):
     "ciclo_while : WHILE LPAREN expresion RPAREN bloque"
-
+    p[0] = ("while", p[3], p[5], p.lineno(1))
 
 # for sobre rango (1..10) o colección (lista): ambos son una expresion
 def p_ciclo_for(p):
     "ciclo_for : FOR LPAREN ID IN expresion RPAREN bloque"
-
+    p[0] = ("for", p[3], p[5], p[7], p.lineno(1))
 
 # break y continue dentro de los ciclos
 def p_salto(p):
     """salto : BREAK
              | CONTINUE"""
-
+    p[0] = ("salto", p[1], p.lineno(1))
 
 # ------------------------------------------------------------------------------
 # Set / MutableSet
