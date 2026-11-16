@@ -80,6 +80,8 @@ def p_expresion_valor(p):
                  | TRUE
                  | FALSE
                  | NULL"""
+    if p.slice[1].type == "ID":
+        verificar_uso(p[1], p.lexpos(1), p.lineno(1))
 
 
 # un tipo también puede ser el nombre de una clase
@@ -177,6 +179,7 @@ def p_lista(p):
 # leo una posición de la lista, por ejemplo notas[0]
 def p_acceso_lista(p):
     "acceso_lista : ID CORCHETEIZQ expresion CORCHETEDER"
+    verificar_uso(p[1], p.lexpos(1), p.lineno(1))
 
 
 # uso propiedades y métodos, por ejemplo notas.size o notas.add(4)
@@ -185,6 +188,8 @@ def p_acceso_miembro(p):
                       | ID DOT ID LPAREN RPAREN
                       | ID DOT ID LPAREN argumentos RPAREN
                       | lectura DOT ID LPAREN RPAREN"""
+    if p.slice[1].type == "ID":
+        verificar_uso(p[1], p.lexpos(1), p.lineno(1))
 
 
 # los valores separados por coma
@@ -221,6 +226,7 @@ def p_retorno(p):
 def p_llamada_funcion(p):
     """llamada_funcion : ID LPAREN RPAREN
                        | ID LPAREN argumentos RPAREN"""
+    verificar_llamada(p[1], p.lexpos(1), p.lineno(1))
 
 
 # mis tipos: números y listas
@@ -515,6 +521,129 @@ def p_parametro_lambda(p):
                         | ID"""
 #---------------FIN DANIELA ESPINOZA--------------------------------------------
 
+
+# ==============================================================================
+# ANÁLISIS SEMÁNTICO: TABLA DE SÍMBOLOS Y ERRORES
+# Responsable: Integración Conjunta
+# ==============================================================================
+
+# la tabla guarda cada variable con su tipo de declaración y dónde se declaró
+tabla_simbolos = {
+    "variables": [],
+    "funciones": set(),
+}
+errores_semanticos = []
+
+
+def error_semantico(categoria, mensaje, linea):
+    errores_semanticos.append(f"Error semántico [{categoria}]: {mensaje} en la línea {linea}")
+
+
+# ==============================================================================
+# REGLAS SEMÁNTICAS: MATEO ANDRADE
+# - Identificadores: una variable o función debe estar declarada antes de usarse
+# - Asignación: un val, const val, parámetro o variable del for no se reasigna
+# ==============================================================================
+
+FUNCIONES_PREDEFINIDAS = {"maxOf", "minOf", "repeat", "require", "check", "error"}
+NOMBRES_PREDEFINIDOS = {"it"}
+
+
+# antes de analizar recorro los tokens y guardo dónde se declara cada nombre
+def preparar_tabla_simbolos(codigo):
+    from src.lexer import construir_lexer
+
+    tabla_simbolos["variables"].clear()
+    tabla_simbolos["funciones"].clear()
+    lexer = construir_lexer()
+    lexer.input(codigo)
+    toks = list(iter(lexer.token, None))
+
+    for i, tok in enumerate(toks):
+        siguiente = toks[i + 1] if i + 1 < len(toks) else None
+        anterior = toks[i - 1] if i > 0 else None
+
+        if tok.type in ("VAL", "VAR") and siguiente and siguiente.type == "ID":
+            tipo = "CONST" if anterior and anterior.type == "CONST" else tok.type
+            declarar(siguiente, tipo)
+
+        elif tok.type == "FUN" and siguiente and siguiente.type == "ID":
+            tabla_simbolos["funciones"].add(siguiente.value)
+            declarar_parametros(toks, i + 2)
+
+        elif tok.type == "CLASS" and siguiente and siguiente.type == "ID":
+            tabla_simbolos["funciones"].add(siguiente.value)
+
+        elif tok.type == "FOR" and i + 3 < len(toks) and toks[i + 2].type == "ID":
+            declarar(toks[i + 2], "FOR")
+
+        elif tok.type == "LLAVEIZQ" and anterior and anterior.type in ("ASIGNAR", "LPAREN", "COMA", "RETURN"):
+            declarar_parametros_lambda(toks, i + 1)
+
+
+def declarar(tok, tipo):
+    tabla_simbolos["variables"].append(
+        {"nombre": tok.value, "tipo": tipo, "posicion": tok.lexpos, "linea": tok.lineno}
+    )
+
+
+# los parámetros son los ID seguidos de ':' dentro de los paréntesis de la función
+def declarar_parametros(toks, inicio):
+    if inicio >= len(toks) or toks[inicio].type != "LPAREN":
+        return
+    nivel = 0
+    for j in range(inicio, len(toks)):
+        if toks[j].type == "LPAREN":
+            nivel += 1
+        elif toks[j].type == "RPAREN":
+            nivel -= 1
+            if nivel == 0:
+                return
+        elif nivel == 1 and toks[j].type == "ID" and j + 1 < len(toks) and toks[j + 1].type == "COLON":
+            declarar(toks[j], "PARAMETRO")
+
+
+# los parámetros de la lambda son los ID que van antes de '->'
+def declarar_parametros_lambda(toks, inicio):
+    candidatos = []
+    for j in range(inicio, len(toks)):
+        if toks[j].type == "ARROW":
+            for tok in candidatos:
+                declarar(tok, "PARAMETRO")
+            return
+        if toks[j].type in ("LLAVEIZQ", "LLAVEDER"):
+            return
+        if toks[j].type == "ID" and j + 1 < len(toks) and toks[j + 1].type in ("COLON", "COMA", "ARROW"):
+            candidatos.append(toks[j])
+
+
+# busco la última declaración del nombre que esté antes del lugar donde se usa
+def buscar_declaracion(nombre, posicion):
+    encontradas = [
+        v for v in tabla_simbolos["variables"]
+        if v["nombre"] == nombre and v["posicion"] < posicion
+    ]
+    return encontradas[-1] if encontradas else None
+
+
+# regla 1: no puedo usar una variable que no se declaró antes
+def verificar_uso(nombre, posicion, linea):
+    if nombre in NOMBRES_PREDEFINIDOS or nombre in tabla_simbolos["funciones"]:
+        return
+    if not buscar_declaracion(nombre, posicion):
+        error_semantico("Identificadores", f"'{nombre}' no está declarada", linea)
+
+
+# regla 1 para funciones: no puedo llamar a una función que no existe
+def verificar_llamada(nombre, posicion, linea):
+    if nombre in tabla_simbolos["funciones"] or nombre in FUNCIONES_PREDEFINIDAS:
+        return
+    if not buscar_declaracion(nombre, posicion):
+        error_semantico("Identificadores", f"la función '{nombre}' no está declarada", linea)
+
+
+# ===== Fin reglas semánticas Mateo Andrade =====
+
 # ==============================================================================
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
 # ==============================================================================
@@ -540,9 +669,33 @@ def analizar(codigo):
     from src.lexer import construir_lexer
 
     errores_sintacticos.clear()
+    errores_semanticos.clear()
+    preparar_tabla_simbolos(codigo)
     lexer = construir_lexer()
     parser.parse(codigo, lexer=lexer)
     return lexer.errores, list(errores_sintacticos)
+
+
+def analizar_semantico(codigo):
+    errores_lexicos, errores = analizar(codigo)
+    return errores_lexicos, errores, list(errores_semanticos)
+
+
+def generar_log_semantico(usuario, errores, archivo_fuente=""):
+    CARPETA_LOGS.mkdir(exist_ok=True)
+    fecha = datetime.now().strftime("%d%m%Y-%Hh%M")
+    ruta = CARPETA_LOGS / f"semantico-{usuario}-{fecha}.txt"
+
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write(f"Análisis semántico - {archivo_fuente}\n")
+        f.write(f"Usuario: {usuario}\n")
+        f.write(f"Fecha: {datetime.now():%d/%m/%Y %H:%M:%S}\n\n")
+        f.write(f"ERRORES SEMÁNTICOS ({len(errores)})\n")
+        for err in errores:
+            f.write(f"{err}\n")
+        if not errores:
+            f.write("\nEl programa es semánticamente válido.\n")
+    return ruta
 
 
 def generar_log_sintactico(usuario, errores_lexicos, errores, archivo_fuente=""):
@@ -574,9 +727,12 @@ if __name__ == "__main__":
     with open(archivo, encoding="utf-8-sig") as f:
         codigo = f.read()
 
-    errores_lexicos, errores = analizar(codigo)
-    for err in errores_lexicos + errores:
+    errores_lexicos, errores, semanticos = analizar_semantico(codigo)
+    for err in errores_lexicos + errores + semanticos:
         print(err)
     if not errores_lexicos and not errores:
         print("El programa es sintácticamente válido.")
+    if not semanticos:
+        print("El programa es semánticamente válido.")
     print(f"\nLog guardado en: {generar_log_sintactico(usuario, errores_lexicos, errores, archivo)}")
+    print(f"Log guardado en: {generar_log_semantico(usuario, semanticos, archivo)}")
