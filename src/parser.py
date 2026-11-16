@@ -151,6 +151,7 @@ def p_reasignacion(p):
     if p.slice[1].type == "ID":
         verificar_reasignacion(p[1], p.lexpos(1), p.lineno(1))
         verificar_reasignacion_tipo(p[1], p.lexpos(1), p[2], p[3], p.lineno(1))
+        verificar_operacion_compuesta(p[1], p.lexpos(1), p[2], p[3], p.lineno(1))
 
 
 def p_operador_asignacion(p):
@@ -267,6 +268,7 @@ def p_expresion_aritmetica(p):
                  | expresion POR expresion
                  | expresion DIVIDIDO expresion
                  | expresion MODULO expresion"""
+    verificar_operacion_binaria(p[2], p[1], p[3], p.lineno(2))
     p[0] = ("binop", p[2], p[1], p[3], p.lineno(2))
 
 
@@ -279,6 +281,7 @@ def p_expresion_parentesis(p):
 # menos unario: -x, usa la precedencia de UMENOS y no la de la resta
 def p_expresion_negativo(p):
     "expresion : MENOS expresion %prec UMENOS"
+    verificar_operacion_unaria("-", p[2], p.lineno(1))
     p[0] = ("unario", "-", p[2], p.lineno(1))
 
 
@@ -286,6 +289,7 @@ def p_expresion_negativo(p):
 def p_expresion_incremento(p):
     """expresion : expresion INCREMENTO
                  | expresion DECREMENTO"""
+    verificar_operacion_unaria(p[2], p[1], p.lineno(2))
     p[0] = ("unario_post", p[2], p[1], p.lineno(2))
 
 # sentencias de Alan: declaración de variable mutable y estructura when
@@ -862,6 +866,65 @@ def verificar_reasignacion_tipo(nombre, posicion, operador, expr, linea):
         return
     tipo_esperado = f"{decl['tipo_dato']}?" if decl["nullable"] else decl["tipo_dato"]
     verificar_compatibilidad_tipo(tipo_esperado, expr, linea)
+
+
+def _conector_y(tipo_der):
+    return "e" if tipo_der.startswith(("I", "i")) else "y"
+
+
+# regla 2 (Alan Aguilar): valida -, *, /, % solo en números y + con String solo a la izquierda
+def verificar_operacion_binaria(op, izq, der, linea):
+    t_izq, _ = inferir_tipo_dato(izq)
+    t_der, _ = inferir_tipo_dato(der)
+    if t_izq == "Desconocido" or t_der == "Desconocido":
+        return
+
+    if op == "+":
+        if t_izq in TIPOS_NUMERICOS and t_der in TIPOS_NUMERICOS:
+            return
+        if t_izq == "String":
+            return
+        if t_der == "String":
+            error_semantico(
+                "Operación",
+                f"'+' con String requiere que String vaya a la izquierda (se encontró {t_izq} y {t_der})",
+                linea,
+            )
+            return
+        error_semantico(
+            "Operación",
+            f"'+' no se puede aplicar a {t_izq} {_conector_y(t_der)} {t_der}",
+            linea,
+        )
+        return
+
+    # operadores -, *, /, % solo aplican a tipos numéricos
+    if t_izq not in TIPOS_NUMERICOS or t_der not in TIPOS_NUMERICOS:
+        error_semantico(
+            "Operación",
+            f"'{op}' no se puede aplicar a {t_izq} {_conector_y(t_der)} {t_der}",
+            linea,
+        )
+
+
+# regla 2 en unarios (Alan Aguilar): menos unario (-x), ++ y -- solo aplican a números
+def verificar_operacion_unaria(op, expr, linea):
+    t_expr, _ = inferir_tipo_dato(expr)
+    if t_expr == "Desconocido":
+        return
+    if t_expr not in TIPOS_NUMERICOS:
+        etiqueta = "'-' unario" if op == "-" else f"'{op}'"
+        error_semantico("Operación", f"{etiqueta} no se puede aplicar a {t_expr}", linea)
+
+
+# regla 2 en asignaciones compuestas (Alan Aguilar): +=, -=, *=, /=, %=
+def verificar_operacion_compuesta(nombre, posicion, operador, expr, linea):
+    if operador not in ("+=", "-=", "*=", "/=", "%="):
+        return
+    decl = buscar_declaracion(nombre, posicion)
+    if not decl or decl["tipo"] != "VAR" or decl["tipo_dato"] == "Desconocido":
+        return
+    verificar_operacion_binaria(operador[0], decl["tipo_dato"], expr, linea)
 
 # ===== Fin reglas semánticas Alan Aguilar =====
 
