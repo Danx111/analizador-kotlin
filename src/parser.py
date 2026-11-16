@@ -843,6 +843,7 @@ def analizar(codigo):
     errores_sintacticos.clear()
     errores_semanticos.clear()
     pila_funciones.clear()
+    tipos_variables.clear()
     global profundidad_bucle
     profundidad_bucle = 0
     

@@ -3,7 +3,7 @@ fun ok2(): String { return "hola" }
 fun ok3(): Boolean { return true }
 fun ok4() { while (true) { break } }
 fun ok5() { while (true) { if (true) { continue } } }
-fun ok7(): Int {
+fun ok6(): Int {
     val x = 10
     return x
 }
