@@ -1,0 +1,7 @@
+Análisis semántico - algoritmos/semantico_alan.kt
+Usuario: alan-am
+Fecha: 15/11/2026 22:12:44
+
+ERRORES SEMÁNTICOS (0)
+
+El programa es semánticamente válido.
