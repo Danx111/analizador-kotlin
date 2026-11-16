@@ -48,6 +48,7 @@ start = "programa"
 # el programa es una lista de sentencias
 def p_programa(p):
     "programa : sentencias"
+    p[0] = p[1]
 
 
 # las sentencias se repiten una tras otra y el punto y coma es opcional
@@ -55,17 +56,23 @@ def p_sentencias(p):
     """sentencias : sentencias sentencia
                   | sentencias SEMICOLON
                   | empty"""
-
+    if len(p) == 3 and p[2] != ";":
+        p[0] = p[1] + [p[2]]
+    elif len(p) == 3:
+        p[0] = p[1]
+    else:
+        p[0] = []
 
 # un bloque son sentencias entre llaves
 def p_bloque(p):
     "bloque : LLAVEIZQ sentencias LLAVEDER"
+    p[0] = ("bloque", p[2])
 
 
 # una expresión sola también es una sentencia, por ejemplo una llamada
 def p_sentencia_expresion(p):
     "sentencia : expresion"
-
+    p[0] = p[1]
 
 # los valores más simples que puede tener una expresión
 def p_expresion_valor(p):
@@ -80,11 +87,16 @@ def p_expresion_valor(p):
                  | TRUE
                  | FALSE
                  | NULL"""
+    p[0] = ("literal", p.slice[1].type, p[1], p.lineno(1))
+    if p.slice[1].type == "ID":
+        verificar_uso(p[1], p.lexpos(1), p.lineno(1))
+        registrar_posicion_uso(p[1], p.lineno(1), p.lexpos(1))
 
 
 # un tipo también puede ser el nombre de una clase
 def p_tipo_nombre(p):
     "tipo : ID"
+    p[0] = p[1]
 
 
 def p_empty(p):
@@ -108,7 +120,7 @@ def p_sentencia_mateo(p):
                  | condicional
                  | funcion
                  | retorno"""
-
+    p[0] = p[1]
 
 # agrego mis expresiones al programa
 def p_expresion_mateo(p):
@@ -117,7 +129,7 @@ def p_expresion_mateo(p):
                  | acceso_lista
                  | acceso_miembro
                  | llamada_funcion"""
-
+    p[0] = p[1]
 
 # imprimo con println o print
 def p_impresion(p):
@@ -136,12 +148,17 @@ def p_lectura(p):
 def p_declaracion_val(p):
     """declaracion_val : VAL ID ASIGNAR expresion
                        | VAL ID ASIGNAR if_expresion"""
-
+    registrar_tipo_inferido(p[2], p.lexpos(2), p[4])
+    p[0] = ("val", p[2], p[4], p.lineno(1))
 
 # cambio el valor de una variable o de una posición de la lista
 def p_reasignacion(p):
     """reasignacion : ID operador_asignacion expresion
                     | acceso_lista operador_asignacion expresion"""
+    if p.slice[1].type == "ID":
+        verificar_reasignacion(p[1], p.lexpos(1), p.lineno(1))
+        verificar_reasignacion_tipo(p[1], p.lexpos(1), p[2], p[3], p.lineno(1))
+        verificar_operacion_compuesta(p[1], p.lexpos(1), p[2], p[3], p.lineno(1))
 
 
 def p_operador_asignacion(p):
@@ -151,6 +168,7 @@ def p_operador_asignacion(p):
                            | POR_ASIGNAR
                            | DIVIDIDO_ASIGNAR
                            | MODULO_ASIGNAR"""
+    p[0] = p[1]
 
 
 # if, else if y else con bloques
@@ -158,6 +176,8 @@ def p_condicional(p):
     """condicional : IF LPAREN expresion RPAREN bloque
                    | IF LPAREN expresion RPAREN bloque ELSE bloque
                    | IF LPAREN expresion RPAREN bloque ELSE condicional"""
+    rama_else = p[7] if len(p) == 8 else None
+    p[0] = ("if", p[3], p[5], rama_else, p.lineno(1))
 
 
 # if usado como valor, por ejemplo val letra = if (x) 'A' else 'B'
@@ -177,6 +197,7 @@ def p_lista(p):
 # leo una posición de la lista, por ejemplo notas[0]
 def p_acceso_lista(p):
     "acceso_lista : ID CORCHETEIZQ expresion CORCHETEDER"
+    verificar_uso(p[1], p.lexpos(1), p.lineno(1))
 
 
 # uso propiedades y métodos, por ejemplo notas.size o notas.add(4)
@@ -185,6 +206,8 @@ def p_acceso_miembro(p):
                       | ID DOT ID LPAREN RPAREN
                       | ID DOT ID LPAREN argumentos RPAREN
                       | lectura DOT ID LPAREN RPAREN"""
+    if p.slice[1].type == "ID":
+        verificar_uso(p[1], p.lexpos(1), p.lineno(1))
 
 
 # los valores separados por coma
@@ -199,6 +222,14 @@ def p_funcion(p):
                | FUN ID LPAREN RPAREN COLON tipo bloque
                | FUN ID LPAREN parametros RPAREN bloque
                | FUN ID LPAREN RPAREN bloque"""
+    if len(p) == 9:    # con params y tipo retorno
+        p[0] = ("funcion", p[2], p[4], p[7], p[8], p.lineno(1))
+    elif len(p) == 8:  # sin params, con tipo retorno
+        p[0] = ("funcion", p[2], [], p[6], p[7], p.lineno(1))
+    elif len(p) == 7:  # con params, sin tipo retorno 
+        p[0] = ("funcion", p[2], p[4], "Unit", p[6], p.lineno(1))
+    else:              # sin params, sin tipo retorno 
+        p[0] = ("funcion", p[2], [], "Unit", p[5], p.lineno(1))
 
 
 def p_parametros(p):
@@ -215,12 +246,15 @@ def p_parametro(p):
 def p_retorno(p):
     """retorno : RETURN expresion
                | RETURN"""
+    expr = p[2] if len(p) == 3 else None
+    p[0] = ("return", expr, p.lineno(1))
 
 
 # llamo a una función, por ejemplo sumar(2, 3)
 def p_llamada_funcion(p):
     """llamada_funcion : ID LPAREN RPAREN
                        | ID LPAREN argumentos RPAREN"""
+    verificar_llamada(p[1], p.lexpos(1), p.lineno(1))
 
 
 # mis tipos: números y listas
@@ -231,7 +265,7 @@ def p_tipo_mateo(p):
             | TIPO_FLOAT
             | TIPO_LIST MENOR tipo MAYOR
             | TIPO_MUTABLELIST MENOR tipo MAYOR"""
-
+    p[0] = p[1]
 
 
 
@@ -252,34 +286,43 @@ def p_expresion_aritmetica(p):
                  | expresion POR expresion
                  | expresion DIVIDIDO expresion
                  | expresion MODULO expresion"""
+    verificar_operacion_binaria(p[2], p[1], p[3], p.lineno(2))
+    p[0] = ("binop", p[2], p[1], p[3], p.lineno(2))
 
 
 # los paréntesis cambian el orden de evaluación
 def p_expresion_parentesis(p):
     "expresion : LPAREN expresion RPAREN"
+    p[0] = p[2]
 
 
 # menos unario: -x, usa la precedencia de UMENOS y no la de la resta
 def p_expresion_negativo(p):
     "expresion : MENOS expresion %prec UMENOS"
+    verificar_operacion_unaria("-", p[2], p.lineno(1))
+    p[0] = ("unario", "-", p[2], p.lineno(1))
 
 
 # incremento y decremento en 1 (postfijo): x++, x--
 def p_expresion_incremento(p):
     """expresion : expresion INCREMENTO
                  | expresion DECREMENTO"""
+    verificar_operacion_unaria(p[2], p[1], p.lineno(2))
+    p[0] = ("unario_post", p[2], p[1], p.lineno(2))
 
 # sentencias de Alan: declaración de variable mutable y estructura when
 def p_sentencia_alan(p):
     """sentencia : declaracion_var
                  | when_stmt"""
-
+    p[0] = p[1]
 
 # declaración mutable con tipo explícito (var x: Tipo = ...)
 def p_declaracion_var(p):
     """declaracion_var : VAR ID COLON tipo ASIGNAR expresion
                        | VAR ID COLON tipo ASIGNAR if_expresion
                        | VAR ID COLON tipo ASIGNAR when_stmt"""
+    if p[6] is not None:
+        verificar_compatibilidad_tipo(p[4], p[6], p.lineno(5))
 
 
 # permite usar when como expresión en asignación val (val x = when (...) { ... })
@@ -316,6 +359,7 @@ def p_valores(p):
 # expresiones de Alan
 def p_expresion_alan(p):
     """expresion : mapa"""
+    p[0] = p[1]
 
 
 # creación de mapas con mapOf y mutableMapOf
@@ -326,6 +370,7 @@ def p_mapa(p):
             | MUTABLEMAPOF LPAREN RPAREN
             | MAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN
             | MUTABLEMAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN"""
+    p[0] = ("tipo", "MutableMap" if p.slice[1].type == "MUTABLEMAPOF" else "Map")
 
 
 def p_pares(p):
@@ -342,6 +387,7 @@ def p_par(p):
 def p_tipo_alan(p):
     """tipo : TIPO_MAP MENOR tipo COMA tipo MAYOR
             | TIPO_MUTABLEMAP MENOR tipo COMA tipo MAYOR"""
+    p[0] = p[1]
 
 
 # funciones de expresión única (fun f(...) = expresion)
@@ -355,6 +401,7 @@ def p_funcion_expresion(p):
 # parámetro formal con valor por defecto (param: Tipo = expresion)
 def p_parametro_defecto(p):
     "parametro : ID COLON tipo ASIGNAR expresion"
+    verificar_compatibilidad_tipo(p[3], p[5], p.lineno(4))
 
 
 
@@ -375,13 +422,13 @@ def p_sentencia_daniela(p):
                  | ciclo_while
                  | ciclo_for
                  | salto"""
-
+    p[0] = p[1]
 
 # agrego mis expresiones al programa
 def p_expresion_daniela(p):
     """expresion : conjunto
                  | lambda_expr"""
-
+    p[0] = p[1]
 
 # operadores lógicos y de comparación
 def p_expresion_logica(p):
@@ -393,11 +440,13 @@ def p_expresion_logica(p):
                  | expresion MAYOR expresion
                  | expresion MENORIGUAL expresion
                  | expresion MAYORIGUAL expresion"""
+    p[0] = ("comparacion", p[2], p[1], p[3], p.lineno(2))
 
 
 # negación lógica
 def p_expresion_not(p):
     "expresion : NOT expresion"
+    p[0] = ("not", p[2], p.lineno(1))
 
 
 # rango, por ejemplo 1..10
@@ -408,6 +457,7 @@ def p_expresion_rango(p):
 # un tipo nullable es un tipo normal seguido de ?
 def p_tipo_nullable(p):
     "tipo_nullable : tipo QUESTION"
+    p[0] = f"{p[1]}?" if p[1] else "Desconocido?"
 
 
 # mis tipos: String, Boolean y conjuntos
@@ -418,6 +468,7 @@ def p_tipo_daniela(p):
             | TIPO_SET MENOR tipo_nullable MAYOR
             | TIPO_MUTABLESET MENOR tipo MAYOR
             | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
+    p[0] = p[1]
 
 
 # var / val con tipo nullable, por ejemplo var apodo: String? = null
@@ -427,6 +478,8 @@ def p_declaracion_nullable(p):
                             | VAR ID COLON tipo_nullable
                             | VAL ID COLON tipo ASIGNAR expresion
                             | VAR ID COLON tipo ASIGNAR expresion"""
+    if len(p) == 7:
+        verificar_compatibilidad_tipo(p[4], p[6], p.lineno(5))
 
 
 # constantes, por ejemplo const val MAX: Int = 10
@@ -434,6 +487,10 @@ def p_declaracion_const(p):
     """declaracion_const : CONST VAL ID COLON tipo ASIGNAR expresion
                          | CONST VAL ID COLON tipo_nullable ASIGNAR expresion
                          | CONST VAL ID ASIGNAR expresion"""
+    if len(p) == 8:
+        verificar_compatibilidad_tipo(p[5], p[7], p.lineno(6))
+    else:
+        registrar_tipo_inferido(p[3], p.lexpos(3), p[5])
 
 
 # llamada segura, por ejemplo nombre?.length o nombre?.uppercase()
@@ -467,18 +524,18 @@ def p_not_null_miembro(p):
 # while con condición y bloque
 def p_ciclo_while(p):
     "ciclo_while : WHILE LPAREN expresion RPAREN bloque"
-
+    p[0] = ("while", p[3], p[5], p.lineno(1))
 
 # for sobre rango (1..10) o colección (lista): ambos son una expresion
 def p_ciclo_for(p):
     "ciclo_for : FOR LPAREN ID IN expresion RPAREN bloque"
-
+    p[0] = ("for", p[3], p[5], p[7], p.lineno(1))
 
 # break y continue dentro de los ciclos
 def p_salto(p):
     """salto : BREAK
              | CONTINUE"""
-
+    p[0] = ("salto", p[1], p.lineno(1))
 
 # ------------------------------------------------------------------------------
 # Set / MutableSet
@@ -515,6 +572,515 @@ def p_parametro_lambda(p):
                         | ID"""
 #---------------FIN DANIELA ESPINOZA--------------------------------------------
 
+
+# ==============================================================================
+# ANÁLISIS SEMÁNTICO: TABLA DE SÍMBOLOS Y ERRORES
+# Responsable: Integración Conjunta
+# ==============================================================================
+
+# la tabla guarda cada variable con su tipo de declaración y dónde se declaró
+tabla_simbolos = {
+    "variables": [],
+    "funciones": set(),
+}
+errores_semanticos = []
+
+
+def error_semantico(categoria, mensaje, linea):
+    errores_semanticos.append(f"Error semántico [{categoria}]: {mensaje} en la línea {linea}")
+
+
+# ==============================================================================
+# REGLAS SEMÁNTICAS: MATEO ANDRADE
+# - Identificadores: una variable o función debe estar declarada antes de usarse
+# - Asignación: un val, const val, parámetro o variable del for no se reasigna
+# ==============================================================================
+
+FUNCIONES_PREDEFINIDAS = {"maxOf", "minOf", "repeat", "require", "check", "error"}
+NOMBRES_PREDEFINIDOS = {"it"}
+
+
+# antes de analizar recorro los tokens y guardo dónde se declara cada nombre
+def preparar_tabla_simbolos(codigo):
+    from src.lexer import construir_lexer
+
+    tabla_simbolos["variables"].clear()
+    tabla_simbolos["funciones"].clear()
+    ultimas_posiciones_uso.clear()
+    lexer = construir_lexer()
+    lexer.input(codigo)
+    toks = list(iter(lexer.token, None))
+
+    for i, tok in enumerate(toks):
+        siguiente = toks[i + 1] if i + 1 < len(toks) else None
+        anterior = toks[i - 1] if i > 0 else None
+
+        if tok.type in ("VAL", "VAR") and siguiente and siguiente.type == "ID":
+            tipo = "CONST" if anterior and anterior.type == "CONST" else tok.type
+            tipo_dato, nullable = extraer_tipo_tokens(toks, i + 2)
+            declarar(siguiente, tipo, tipo_dato, nullable)
+
+        elif tok.type == "FUN" and siguiente and siguiente.type == "ID":
+            tabla_simbolos["funciones"].add(siguiente.value)
+            declarar_parametros(toks, i + 2)
+
+        elif tok.type == "CLASS" and siguiente and siguiente.type == "ID":
+            tabla_simbolos["funciones"].add(siguiente.value)
+
+        elif tok.type == "FOR" and i + 3 < len(toks) and toks[i + 2].type == "ID":
+            declarar(toks[i + 2], "FOR")
+
+        elif tok.type == "LLAVEIZQ" and anterior and anterior.type in ("ASIGNAR", "LPAREN", "COMA", "RETURN"):
+            declarar_parametros_lambda(toks, i + 1)
+
+
+def declarar(tok, tipo, tipo_dato="Desconocido", nullable=False):
+    tabla_simbolos["variables"].append(
+        {
+            "nombre": tok.value,
+            "tipo": tipo,
+            "tipo_dato": tipo_dato,
+            "nullable": nullable,
+            "posicion": tok.lexpos,
+            "linea": tok.lineno,
+        }
+    )
+
+
+# los parámetros son los ID seguidos de ':' dentro de los paréntesis de la función
+def declarar_parametros(toks, inicio):
+    if inicio >= len(toks) or toks[inicio].type != "LPAREN":
+        return
+    nivel = 0
+    for j in range(inicio, len(toks)):
+        if toks[j].type == "LPAREN":
+            nivel += 1
+        elif toks[j].type == "RPAREN":
+            nivel -= 1
+            if nivel == 0:
+                return
+        elif nivel == 1 and toks[j].type == "ID" and j + 1 < len(toks) and toks[j + 1].type == "COLON":
+            tipo_dato, nullable = extraer_tipo_tokens(toks, j + 1)
+            declarar(toks[j], "PARAMETRO", tipo_dato, nullable)
+
+
+# los parámetros de la lambda son los ID que van antes de '->'
+def declarar_parametros_lambda(toks, inicio):
+    candidatos = []
+    for j in range(inicio, len(toks)):
+        if toks[j].type == "ARROW":
+            for tok in candidatos:
+                declarar(tok, "PARAMETRO")
+            return
+        if toks[j].type in ("LLAVEIZQ", "LLAVEDER"):
+            return
+        if toks[j].type == "ID" and j + 1 < len(toks) and toks[j + 1].type in ("COLON", "COMA", "ARROW"):
+            candidatos.append(toks[j])
+
+
+# busco la última declaración del nombre que esté antes del lugar donde se usa
+def buscar_declaracion(nombre, posicion):
+    encontradas = [
+        v for v in tabla_simbolos["variables"]
+        if v["nombre"] == nombre and v["posicion"] < posicion
+    ]
+    return encontradas[-1] if encontradas else None
+
+
+# regla 1: no puedo usar una variable que no se declaró antes
+def verificar_uso(nombre, posicion, linea):
+    if nombre in NOMBRES_PREDEFINIDOS or nombre in tabla_simbolos["funciones"]:
+        return
+    if not buscar_declaracion(nombre, posicion):
+        error_semantico("Identificadores", f"'{nombre}' no está declarada", linea)
+
+
+# regla 1 para funciones: no puedo llamar a una función que no existe
+def verificar_llamada(nombre, posicion, linea):
+    if nombre in tabla_simbolos["funciones"] or nombre in FUNCIONES_PREDEFINIDAS:
+        return
+    if not buscar_declaracion(nombre, posicion):
+        error_semantico("Identificadores", f"la función '{nombre}' no está declarada", linea)
+
+
+# regla 2: no puedo cambiar el valor de un val, const val, parámetro o variable del for
+def verificar_reasignacion(nombre, posicion, linea):
+    declaracion = buscar_declaracion(nombre, posicion)
+    if not declaracion:
+        error_semantico("Identificadores", f"'{nombre}' no está declarada", linea)
+    elif declaracion["tipo"] != "VAR":
+        tipos = {"VAL": "val", "CONST": "const val", "PARAMETRO": "un parámetro", "FOR": "la variable del for"}
+        error_semantico(
+            "Asignación",
+            f"'{nombre}' es {tipos[declaracion['tipo']]} y no puede reasignarse",
+            linea,
+        )
+
+# ===== Fin reglas semánticas Mateo Andrade =====
+
+
+# ==============================================================================
+# REGLAS SEMÁNTICAS: ALAN AGUILAR
+# - Registro e inferencia de tipos de dato y nullabilidad en tabla de símbolos
+# - Asignación de tipo: compatibilidad de tipos y validación de null en T?
+# - Operaciones permitidas: -, *, /, % solo numéricos; + con String a la izquierda
+# ==============================================================================
+
+TIPOS_NUMERICOS = {"Int", "Long", "Double", "Float"}
+MAPA_LITERALES_TIPO = {
+    "ENTERO": "Int",
+    "ENTERO_LARGO": "Long",
+    "DECIMAL": "Double",
+    "FLOTANTE": "Float",
+    "STRING_LITERAL": "String",
+    "CHAR": "Char",
+    "CHAR_LITERAL": "Char",
+    "TRUE": "Boolean",
+    "FALSE": "Boolean",
+    "NULL": "Null",
+}
+ultimas_posiciones_uso = {}
+
+
+def registrar_posicion_uso(nombre, linea, posicion):
+    ultimas_posiciones_uso[(nombre, linea)] = posicion
+
+
+# extrae (tipo_dato, nullable) cuando una declaración tiene ': Tipo' o ': Tipo?'
+def extraer_tipo_tokens(toks, idx_colon):
+    if idx_colon >= len(toks) or toks[idx_colon].type != "COLON":
+        return "Desconocido", False
+    idx_tipo = idx_colon + 1
+    if idx_tipo >= len(toks):
+        return "Desconocido", False
+
+    tipo_base = toks[idx_tipo].value
+    j = idx_tipo + 1
+    # si el tipo tiene genéricos como Map<String, Int>, avanza hasta el '>' de cierre
+    if j < len(toks) and toks[j].type == "MENOR":
+        nivel = 0
+        while j < len(toks):
+            if toks[j].type == "MENOR":
+                nivel += 1
+            elif toks[j].type == "MAYOR":
+                nivel -= 1
+                if nivel == 0:
+                    j += 1
+                    break
+            j += 1
+
+    nullable = j < len(toks) and toks[j].type == "QUESTION"
+    return tipo_base, nullable
+
+
+# guarda el tipo inferido en una declaración sin tipo explícito (ej. val pi = 3.14)
+def registrar_tipo_inferido(nombre, posicion, expr):
+    decl = buscar_declaracion(nombre, posicion + 1)
+    if not decl or decl["tipo_dato"] != "Desconocido":
+        return
+    tipo_dato, nullable = inferir_tipo_dato(expr)
+    if tipo_dato != "Desconocido":
+        decl["tipo_dato"] = tipo_dato
+        decl["nullable"] = nullable
+
+
+# devuelve (tipo_dato, nullable) para una expresión o literal
+def inferir_tipo_dato(nodo):
+    if nodo is None:
+        return "Desconocido", False
+    if isinstance(nodo, str):
+        if nodo.endswith("?"):
+            return nodo[:-1], True
+        return nodo, False
+    if not isinstance(nodo, tuple):
+        return "Desconocido", False
+
+    etiqueta = nodo[0]
+    if etiqueta == "literal":
+        _, tipo_tok, valor, linea = nodo
+        if tipo_tok == "ID":
+            pos = ultimas_posiciones_uso.get((valor, linea))
+            if pos is not None:
+                decl = buscar_declaracion(valor, pos)
+                if decl:
+                    return decl["tipo_dato"], decl["nullable"]
+            return "Desconocido", False
+        tipo_lit = MAPA_LITERALES_TIPO.get(tipo_tok, "Desconocido")
+        return tipo_lit, (tipo_lit == "Null")
+
+    if etiqueta == "tipo":
+        return nodo[1], False
+
+    if etiqueta in ("comparacion", "not"):
+        return "Boolean", False
+
+    if etiqueta in ("unario", "unario_post"):
+        tipo_op, _ = inferir_tipo_dato(nodo[2])
+        return (tipo_op, False) if tipo_op in TIPOS_NUMERICOS else ("Desconocido", False)
+
+    if etiqueta == "binop":
+        _, op, izq, der, _ = nodo
+        t_izq, _ = inferir_tipo_dato(izq)
+        t_der, _ = inferir_tipo_dato(der)
+        if op == "+" and t_izq == "String":
+            return "String", False
+        if t_izq in TIPOS_NUMERICOS and t_der in TIPOS_NUMERICOS:
+            for t_pref in ("Double", "Float", "Long", "Int"):
+                if t_izq == t_pref or t_der == t_pref:
+                    return t_pref, False
+        return "Desconocido", False
+
+    return "Desconocido", False
+
+
+SUBTIPOS_COLECCION = {
+    "MutableMap": "Map",
+    "MutableList": "List",
+    "MutableSet": "Set",
+}
+
+
+# regla 1 (Alan Aguilar): compatibilidad de tipos en declaraciones, parámetros por defecto y nullables
+def verificar_compatibilidad_tipo(tipo_esperado_raw, expr, linea):
+    tipo_esperado, acepta_null = inferir_tipo_dato(tipo_esperado_raw)
+    if tipo_esperado == "Desconocido":
+        return
+
+    tipo_encontrado, expr_es_nullable = inferir_tipo_dato(expr)
+    if tipo_encontrado == "Desconocido":
+        return
+
+    # null solo se acepta si el tipo declarado termina en '?' (T?)
+    if tipo_encontrado == "Null":
+        if not acepta_null:
+            error_semantico(
+                "Tipos",
+                f"no se puede asignar null a tipo no nullable {tipo_esperado}",
+                linea,
+            )
+        return
+
+    # una variable nullable (ej. Int?) no puede asignarse a un tipo no nullable (Int)
+    if expr_es_nullable and not acepta_null:
+        error_semantico(
+            "Tipos",
+            f"se esperaba {tipo_esperado} y se encontró {tipo_encontrado}?",
+            linea,
+        )
+        return
+
+    if tipo_encontrado != tipo_esperado and SUBTIPOS_COLECCION.get(tipo_encontrado) != tipo_esperado:
+        error_semantico(
+            "Tipos",
+            f"se esperaba {tipo_esperado} y se encontró {tipo_encontrado}",
+            linea,
+        )
+
+
+# regla 1 en reasignación (Alan Aguilar): verifica que 'x = expr' respete el tipo original de x
+def verificar_reasignacion_tipo(nombre, posicion, operador, expr, linea):
+    if operador != "=":
+        return
+    decl = buscar_declaracion(nombre, posicion)
+    if not decl or decl["tipo"] != "VAR" or decl["tipo_dato"] == "Desconocido":
+        return
+    tipo_esperado = f"{decl['tipo_dato']}?" if decl["nullable"] else decl["tipo_dato"]
+    verificar_compatibilidad_tipo(tipo_esperado, expr, linea)
+
+
+def _conector_y(tipo_der):
+    return "e" if tipo_der.startswith(("I", "i")) else "y"
+
+
+# regla 2 (Alan Aguilar): valida -, *, /, % solo en números y + con String solo a la izquierda
+def verificar_operacion_binaria(op, izq, der, linea):
+    t_izq, _ = inferir_tipo_dato(izq)
+    t_der, _ = inferir_tipo_dato(der)
+    if t_izq == "Desconocido" or t_der == "Desconocido":
+        return
+
+    if op == "+":
+        if t_izq in TIPOS_NUMERICOS and t_der in TIPOS_NUMERICOS:
+            return
+        if t_izq == "String":
+            return
+        if t_der == "String":
+            error_semantico(
+                "Operación",
+                f"'+' con String requiere que String vaya a la izquierda (se encontró {t_izq} y {t_der})",
+                linea,
+            )
+            return
+        error_semantico(
+            "Operación",
+            f"'+' no se puede aplicar a {t_izq} {_conector_y(t_der)} {t_der}",
+            linea,
+        )
+        return
+
+    # operadores -, *, /, % solo aplican a tipos numéricos
+    if t_izq not in TIPOS_NUMERICOS or t_der not in TIPOS_NUMERICOS:
+        error_semantico(
+            "Operación",
+            f"'{op}' no se puede aplicar a {t_izq} {_conector_y(t_der)} {t_der}",
+            linea,
+        )
+
+
+# regla 2 en unarios (Alan Aguilar): menos unario (-x), ++ y -- solo aplican a números
+def verificar_operacion_unaria(op, expr, linea):
+    t_expr, _ = inferir_tipo_dato(expr)
+    if t_expr == "Desconocido":
+        return
+    if t_expr not in TIPOS_NUMERICOS:
+        etiqueta = "'-' unario" if op == "-" else f"'{op}'"
+        error_semantico("Operación", f"{etiqueta} no se puede aplicar a {t_expr}", linea)
+
+
+# regla 2 en asignaciones compuestas (Alan Aguilar): +=, -=, *=, /=, %=
+def verificar_operacion_compuesta(nombre, posicion, operador, expr, linea):
+    if operador not in ("+=", "-=", "*=", "/=", "%="):
+        return
+    decl = buscar_declaracion(nombre, posicion)
+    if not decl or decl["tipo"] != "VAR" or decl["tipo_dato"] == "Desconocido":
+        return
+    verificar_operacion_binaria(operador[0], decl["tipo_dato"], expr, linea)
+
+# ===== Fin reglas semánticas Alan Aguilar =====
+
+
+# ==============================================================================
+# REGLAS SEMÁNTICAS: DANIELA ESPINOZA
+# - Retorno de funciones: el tipo en return debe coincidir con el declarado
+# - Estructuras de control: break/continue solo en bucles; condición Boolean
+# ==============================================================================
+pila_funciones = []
+profundidad_bucle = 0
+tipos_variables = {}
+
+def inferir_tipo_daniela(nodo):
+    if nodo is None:
+        return "Unit"
+    if not isinstance(nodo, tuple):
+        return "Desconocido"
+
+    etiqueta = nodo[0]
+    if etiqueta == "literal":
+        _, tipo_tok, valor, _ = nodo
+        mapa = {
+            "ENTERO": "Int",
+            "ENTERO_LARGO": "Long",
+            "DECIMAL": "Double",
+            "FLOTANTE": "Float",
+            "STRING_LITERAL": "String",
+            "CHAR_LITERAL": "Char",
+            "CHAR": "Char",
+            "TRUE": "Boolean",
+            "FALSE": "Boolean",
+            "NULL": "Null",
+        }
+        if tipo_tok == "ID":
+            return tipos_variables.get(valor, "Desconocido")
+        return mapa.get(tipo_tok, "Desconocido")
+
+    if etiqueta in ("comparacion", "not"):
+        return "Boolean"
+
+    return "Desconocido"
+
+
+def verificar_ast_daniela(nodo):
+    global profundidad_bucle
+
+    if nodo is None:
+        return
+    if isinstance(nodo, list):
+        for item in nodo:
+            verificar_ast_daniela(item)
+        return
+    if not isinstance(nodo, tuple):
+        return
+
+    etiqueta = nodo[0]
+
+    if etiqueta == "bloque":
+        guardado = dict(tipos_variables)       
+        verificar_ast_daniela(nodo[1])
+        tipos_variables.clear()
+        tipos_variables.update(guardado)
+
+    elif etiqueta == "val":
+        # ('val', nombre, expr, linea)
+        _, nombre, expr, _ = nodo
+        tipos_variables[nombre] = inferir_tipo_daniela(expr)
+
+    # --- REGLA 1: Retorno de funciones ---
+    elif etiqueta == "funcion":
+        # ('funcion', nombre, params, tipo_retorno, bloque, linea)
+        _, nombre, _, tipo_retorno, bloque, _ = nodo
+        pila_funciones.append((nombre, tipo_retorno))
+        verificar_ast_daniela(bloque)
+        pila_funciones.pop()
+
+    elif etiqueta == "return":
+        # ('return', expr, linea)
+        _, expr, linea = nodo
+        if not pila_funciones:
+            error_semantico("Retorno", "'return' fuera de una función", linea)
+            return
+        nombre_fn, tipo_esperado = pila_funciones[-1]
+        tipo_retornado = inferir_tipo_daniela(expr)
+        if tipo_retornado != "Desconocido" and tipo_esperado != tipo_retornado:
+            error_semantico(
+                "Retorno",
+                f"'{nombre_fn}' debe retornar {tipo_esperado} y retorna {tipo_retornado}",
+                linea,
+            )
+
+# --- REGLA 2: Estructuras de control (bucles y condición Boolean) ---
+    elif etiqueta == "while":
+        # ('while', condicion, bloque, linea)
+        _, condicion, bloque, linea = nodo
+        tipo_cond = inferir_tipo_daniela(condicion)
+        if tipo_cond not in ("Boolean", "Desconocido"):
+            error_semantico(
+                "Control",
+                f"la condición de 'while' debe ser Boolean y es {tipo_cond}",
+                linea,
+            )
+        profundidad_bucle += 1
+        verificar_ast_daniela(bloque)
+        profundidad_bucle -= 1
+
+    elif etiqueta == "for":
+        # ('for', var_iter, iterable, bloque, linea)
+        _, _, _, bloque, _ = nodo
+        profundidad_bucle += 1
+        verificar_ast_daniela(bloque)
+        profundidad_bucle -= 1
+
+    elif etiqueta == "if":
+        # ('if', condicion, bloque_if, bloque_else, linea)
+        _, condicion, bloque_if, bloque_else, linea = nodo
+        tipo_cond = inferir_tipo_daniela(condicion)
+        if tipo_cond not in ("Boolean", "Desconocido"):
+            error_semantico(
+                "Control",
+                f"la condición de 'if' debe ser Boolean y es {tipo_cond}",
+                linea,
+            )
+        verificar_ast_daniela(bloque_if)
+        if bloque_else is not None:
+            verificar_ast_daniela(bloque_else)
+
+    elif etiqueta == "salto":
+        # ('salto', palabra, linea)
+        _, palabra, linea = nodo
+        if profundidad_bucle == 0:
+            error_semantico("Control", f"'{palabra}' fuera de un bucle", linea)
+
+# ===== Fin reglas semánticas Daniela Espinoza =====
+
 # ==============================================================================
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
 # ==============================================================================
@@ -540,9 +1106,41 @@ def analizar(codigo):
     from src.lexer import construir_lexer
 
     errores_sintacticos.clear()
+    errores_semanticos.clear()
+    pila_funciones.clear()
+    tipos_variables.clear()
+    global profundidad_bucle
+    profundidad_bucle = 0
+    
+    preparar_tabla_simbolos(codigo)
     lexer = construir_lexer()
-    parser.parse(codigo, lexer=lexer)
+    ast = parser.parse(codigo, lexer=lexer)
+
+    if not lexer.errores and not errores_sintacticos and ast is not None:
+        verificar_ast_daniela(ast)
     return lexer.errores, list(errores_sintacticos)
+
+
+def analizar_semantico(codigo):
+    errores_lexicos, errores = analizar(codigo)
+    return errores_lexicos, errores, list(errores_semanticos)
+
+
+def generar_log_semantico(usuario, errores, archivo_fuente=""):
+    CARPETA_LOGS.mkdir(exist_ok=True)
+    fecha = datetime.now().strftime("%d%m%Y-%Hh%M")
+    ruta = CARPETA_LOGS / f"semantico-{usuario}-{fecha}.txt"
+
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write(f"Análisis semántico - {archivo_fuente}\n")
+        f.write(f"Usuario: {usuario}\n")
+        f.write(f"Fecha: {datetime.now():%d/%m/%Y %H:%M:%S}\n\n")
+        f.write(f"ERRORES SEMÁNTICOS ({len(errores)})\n")
+        for err in errores:
+            f.write(f"{err}\n")
+        if not errores:
+            f.write("\nEl programa es semánticamente válido.\n")
+    return ruta
 
 
 def generar_log_sintactico(usuario, errores_lexicos, errores, archivo_fuente=""):
@@ -574,9 +1172,12 @@ if __name__ == "__main__":
     with open(archivo, encoding="utf-8-sig") as f:
         codigo = f.read()
 
-    errores_lexicos, errores = analizar(codigo)
-    for err in errores_lexicos + errores:
+    errores_lexicos, errores, semanticos = analizar_semantico(codigo)
+    for err in errores_lexicos + errores + semanticos:
         print(err)
     if not errores_lexicos and not errores:
         print("El programa es sintácticamente válido.")
+    if not semanticos:
+        print("El programa es semánticamente válido.")
     print(f"\nLog guardado en: {generar_log_sintactico(usuario, errores_lexicos, errores, archivo)}")
+    print(f"Log guardado en: {generar_log_semantico(usuario, semanticos, archivo)}")

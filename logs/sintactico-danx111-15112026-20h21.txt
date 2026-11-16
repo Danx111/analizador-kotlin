@@ -1,0 +1,11 @@
+Análisis sintáctico - algoritmos/algoritmo_daniela_semantico.kt
+Usuario: danx111
+Fecha: 15/11/2026 20:21:27
+
+ERRORES LÉXICOS (0)
+
+ERRORES SINTÁCTICOS (4)
+Error sintáctico: token inesperado 'do' (DO) en la línea 6
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 6
+Error sintáctico: token inesperado 'do' (DO) en la línea 22
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 22
