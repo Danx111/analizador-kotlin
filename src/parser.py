@@ -150,6 +150,7 @@ def p_reasignacion(p):
                     | acceso_lista operador_asignacion expresion"""
     if p.slice[1].type == "ID":
         verificar_reasignacion(p[1], p.lexpos(1), p.lineno(1))
+        verificar_reasignacion_tipo(p[1], p.lexpos(1), p[2], p[3], p.lineno(1))
 
 
 def p_operador_asignacion(p):
@@ -159,6 +160,7 @@ def p_operador_asignacion(p):
                            | POR_ASIGNAR
                            | DIVIDIDO_ASIGNAR
                            | MODULO_ASIGNAR"""
+    p[0] = p[1]
 
 
 # if, else if y else con bloques
@@ -297,6 +299,8 @@ def p_declaracion_var(p):
     """declaracion_var : VAR ID COLON tipo ASIGNAR expresion
                        | VAR ID COLON tipo ASIGNAR if_expresion
                        | VAR ID COLON tipo ASIGNAR when_stmt"""
+    if p[6] is not None:
+        verificar_compatibilidad_tipo(p[4], p[6], p.lineno(5))
 
 
 # permite usar when como expresión en asignación val (val x = when (...) { ... })
@@ -375,6 +379,7 @@ def p_funcion_expresion(p):
 # parámetro formal con valor por defecto (param: Tipo = expresion)
 def p_parametro_defecto(p):
     "parametro : ID COLON tipo ASIGNAR expresion"
+    verificar_compatibilidad_tipo(p[3], p[5], p.lineno(4))
 
 
 
@@ -449,6 +454,8 @@ def p_declaracion_nullable(p):
                             | VAR ID COLON tipo_nullable
                             | VAL ID COLON tipo ASIGNAR expresion
                             | VAR ID COLON tipo ASIGNAR expresion"""
+    if len(p) == 7:
+        verificar_compatibilidad_tipo(p[4], p[6], p.lineno(5))
 
 
 # constantes, por ejemplo const val MAX: Int = 10
@@ -456,6 +463,10 @@ def p_declaracion_const(p):
     """declaracion_const : CONST VAL ID COLON tipo ASIGNAR expresion
                          | CONST VAL ID COLON tipo_nullable ASIGNAR expresion
                          | CONST VAL ID ASIGNAR expresion"""
+    if len(p) == 8:
+        verificar_compatibilidad_tipo(p[5], p[7], p.lineno(6))
+    else:
+        registrar_tipo_inferido(p[3], p.lexpos(3), p[5])
 
 
 # llamada segura, por ejemplo nombre?.length o nombre?.uppercase()
@@ -796,6 +807,61 @@ def inferir_tipo_dato(nodo):
         return "Desconocido", False
 
     return "Desconocido", False
+
+
+SUBTIPOS_COLECCION = {
+    "MutableMap": "Map",
+    "MutableList": "List",
+    "MutableSet": "Set",
+}
+
+
+# regla 1 (Alan Aguilar): compatibilidad de tipos en declaraciones, parámetros por defecto y nullables
+def verificar_compatibilidad_tipo(tipo_esperado_raw, expr, linea):
+    tipo_esperado, acepta_null = inferir_tipo_dato(tipo_esperado_raw)
+    if tipo_esperado == "Desconocido":
+        return
+
+    tipo_encontrado, expr_es_nullable = inferir_tipo_dato(expr)
+    if tipo_encontrado == "Desconocido":
+        return
+
+    # null solo se acepta si el tipo declarado termina en '?' (T?)
+    if tipo_encontrado == "Null":
+        if not acepta_null:
+            error_semantico(
+                "Tipos",
+                f"no se puede asignar null a tipo no nullable {tipo_esperado}",
+                linea,
+            )
+        return
+
+    # una variable nullable (ej. Int?) no puede asignarse a un tipo no nullable (Int)
+    if expr_es_nullable and not acepta_null:
+        error_semantico(
+            "Tipos",
+            f"se esperaba {tipo_esperado} y se encontró {tipo_encontrado}?",
+            linea,
+        )
+        return
+
+    if tipo_encontrado != tipo_esperado and SUBTIPOS_COLECCION.get(tipo_encontrado) != tipo_esperado:
+        error_semantico(
+            "Tipos",
+            f"se esperaba {tipo_esperado} y se encontró {tipo_encontrado}",
+            linea,
+        )
+
+
+# regla 1 en reasignación (Alan Aguilar): verifica que 'x = expr' respete el tipo original de x
+def verificar_reasignacion_tipo(nombre, posicion, operador, expr, linea):
+    if operador != "=":
+        return
+    decl = buscar_declaracion(nombre, posicion)
+    if not decl or decl["tipo"] != "VAR" or decl["tipo_dato"] == "Desconocido":
+        return
+    tipo_esperado = f"{decl['tipo_dato']}?" if decl["nullable"] else decl["tipo_dato"]
+    verificar_compatibilidad_tipo(tipo_esperado, expr, linea)
 
 # ===== Fin reglas semánticas Alan Aguilar =====
 
