@@ -144,6 +144,8 @@ def p_declaracion_val(p):
 def p_reasignacion(p):
     """reasignacion : ID operador_asignacion expresion
                     | acceso_lista operador_asignacion expresion"""
+    if p.slice[1].type == "ID":
+        verificar_reasignacion(p[1], p.lexpos(1), p.lineno(1))
 
 
 def p_operador_asignacion(p):
@@ -641,6 +643,19 @@ def verificar_llamada(nombre, posicion, linea):
     if not buscar_declaracion(nombre, posicion):
         error_semantico("Identificadores", f"la función '{nombre}' no está declarada", linea)
 
+
+# regla 2: no puedo cambiar el valor de un val, const val, parámetro o variable del for
+def verificar_reasignacion(nombre, posicion, linea):
+    declaracion = buscar_declaracion(nombre, posicion)
+    if not declaracion:
+        error_semantico("Identificadores", f"'{nombre}' no está declarada", linea)
+    elif declaracion["tipo"] != "VAR":
+        tipos = {"VAL": "val", "CONST": "const val", "PARAMETRO": "un parámetro", "FOR": "la variable del for"}
+        error_semantico(
+            "Asignación",
+            f"'{nombre}' es {tipos[declaracion['tipo']]} y no puede reasignarse",
+            linea,
+        )
 
 # ===== Fin reglas semánticas Mateo Andrade =====
 
