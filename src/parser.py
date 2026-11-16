@@ -80,13 +80,16 @@ def p_expresion_valor(p):
                  | TRUE
                  | FALSE
                  | NULL"""
+    p[0] = ("literal", p.slice[1].type, p[1], p.lineno(1))
     if p.slice[1].type == "ID":
         verificar_uso(p[1], p.lexpos(1), p.lineno(1))
+        registrar_posicion_uso(p[1], p.lineno(1), p.lexpos(1))
 
 
 # un tipo también puede ser el nombre de una clase
 def p_tipo_nombre(p):
     "tipo : ID"
+    p[0] = p[1]
 
 
 def p_empty(p):
@@ -138,6 +141,7 @@ def p_lectura(p):
 def p_declaracion_val(p):
     """declaracion_val : VAL ID ASIGNAR expresion
                        | VAL ID ASIGNAR if_expresion"""
+    registrar_tipo_inferido(p[2], p.lexpos(2), p[4])
 
 
 # cambio el valor de una variable o de una posición de la lista
@@ -239,6 +243,7 @@ def p_tipo_mateo(p):
             | TIPO_FLOAT
             | TIPO_LIST MENOR tipo MAYOR
             | TIPO_MUTABLELIST MENOR tipo MAYOR"""
+    p[0] = p[1]
 
 
 
@@ -260,22 +265,26 @@ def p_expresion_aritmetica(p):
                  | expresion POR expresion
                  | expresion DIVIDIDO expresion
                  | expresion MODULO expresion"""
+    p[0] = ("binop", p[2], p[1], p[3], p.lineno(2))
 
 
 # los paréntesis cambian el orden de evaluación
 def p_expresion_parentesis(p):
     "expresion : LPAREN expresion RPAREN"
+    p[0] = p[2]
 
 
 # menos unario: -x, usa la precedencia de UMENOS y no la de la resta
 def p_expresion_negativo(p):
     "expresion : MENOS expresion %prec UMENOS"
+    p[0] = ("unario", "-", p[2], p.lineno(1))
 
 
 # incremento y decremento en 1 (postfijo): x++, x--
 def p_expresion_incremento(p):
     """expresion : expresion INCREMENTO
                  | expresion DECREMENTO"""
+    p[0] = ("unario_post", p[2], p[1], p.lineno(2))
 
 # sentencias de Alan: declaración de variable mutable y estructura when
 def p_sentencia_alan(p):
@@ -324,6 +333,7 @@ def p_valores(p):
 # expresiones de Alan
 def p_expresion_alan(p):
     """expresion : mapa"""
+    p[0] = p[1]
 
 
 # creación de mapas con mapOf y mutableMapOf
@@ -334,6 +344,7 @@ def p_mapa(p):
             | MUTABLEMAPOF LPAREN RPAREN
             | MAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN
             | MUTABLEMAPOF MENOR tipo COMA tipo MAYOR LPAREN RPAREN"""
+    p[0] = ("tipo", "MutableMap" if p.slice[1].type == "MUTABLEMAPOF" else "Map")
 
 
 def p_pares(p):
@@ -350,6 +361,7 @@ def p_par(p):
 def p_tipo_alan(p):
     """tipo : TIPO_MAP MENOR tipo COMA tipo MAYOR
             | TIPO_MUTABLEMAP MENOR tipo COMA tipo MAYOR"""
+    p[0] = p[1]
 
 
 # funciones de expresión única (fun f(...) = expresion)
@@ -416,6 +428,7 @@ def p_expresion_rango(p):
 # un tipo nullable es un tipo normal seguido de ?
 def p_tipo_nullable(p):
     "tipo_nullable : tipo QUESTION"
+    p[0] = f"{p[1]}?" if p[1] else "Desconocido?"
 
 
 # mis tipos: String, Boolean y conjuntos
@@ -426,6 +439,7 @@ def p_tipo_daniela(p):
             | TIPO_SET MENOR tipo_nullable MAYOR
             | TIPO_MUTABLESET MENOR tipo MAYOR
             | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
+    p[0] = p[1]
 
 
 # var / val con tipo nullable, por ejemplo var apodo: String? = null
@@ -557,6 +571,7 @@ def preparar_tabla_simbolos(codigo):
 
     tabla_simbolos["variables"].clear()
     tabla_simbolos["funciones"].clear()
+    ultimas_posiciones_uso.clear()
     lexer = construir_lexer()
     lexer.input(codigo)
     toks = list(iter(lexer.token, None))
@@ -567,7 +582,8 @@ def preparar_tabla_simbolos(codigo):
 
         if tok.type in ("VAL", "VAR") and siguiente and siguiente.type == "ID":
             tipo = "CONST" if anterior and anterior.type == "CONST" else tok.type
-            declarar(siguiente, tipo)
+            tipo_dato, nullable = extraer_tipo_tokens(toks, i + 2)
+            declarar(siguiente, tipo, tipo_dato, nullable)
 
         elif tok.type == "FUN" and siguiente and siguiente.type == "ID":
             tabla_simbolos["funciones"].add(siguiente.value)
@@ -583,9 +599,16 @@ def preparar_tabla_simbolos(codigo):
             declarar_parametros_lambda(toks, i + 1)
 
 
-def declarar(tok, tipo):
+def declarar(tok, tipo, tipo_dato="Desconocido", nullable=False):
     tabla_simbolos["variables"].append(
-        {"nombre": tok.value, "tipo": tipo, "posicion": tok.lexpos, "linea": tok.lineno}
+        {
+            "nombre": tok.value,
+            "tipo": tipo,
+            "tipo_dato": tipo_dato,
+            "nullable": nullable,
+            "posicion": tok.lexpos,
+            "linea": tok.lineno,
+        }
     )
 
 
@@ -602,7 +625,8 @@ def declarar_parametros(toks, inicio):
             if nivel == 0:
                 return
         elif nivel == 1 and toks[j].type == "ID" and j + 1 < len(toks) and toks[j + 1].type == "COLON":
-            declarar(toks[j], "PARAMETRO")
+            tipo_dato, nullable = extraer_tipo_tokens(toks, j + 1)
+            declarar(toks[j], "PARAMETRO", tipo_dato, nullable)
 
 
 # los parámetros de la lambda son los ID que van antes de '->'
@@ -658,6 +682,122 @@ def verificar_reasignacion(nombre, posicion, linea):
         )
 
 # ===== Fin reglas semánticas Mateo Andrade =====
+
+
+# ==============================================================================
+# REGLAS SEMÁNTICAS: ALAN AGUILAR
+# - Registro e inferencia de tipos de dato y nullabilidad en tabla de símbolos
+# - Asignación de tipo: compatibilidad de tipos y validación de null en T?
+# - Operaciones permitidas: -, *, /, % solo numéricos; + con String a la izquierda
+# ==============================================================================
+
+TIPOS_NUMERICOS = {"Int", "Long", "Double", "Float"}
+MAPA_LITERALES_TIPO = {
+    "ENTERO": "Int",
+    "ENTERO_LARGO": "Long",
+    "DECIMAL": "Double",
+    "FLOTANTE": "Float",
+    "STRING_LITERAL": "String",
+    "CHAR": "Char",
+    "CHAR_LITERAL": "Char",
+    "TRUE": "Boolean",
+    "FALSE": "Boolean",
+    "NULL": "Null",
+}
+ultimas_posiciones_uso = {}
+
+
+def registrar_posicion_uso(nombre, linea, posicion):
+    ultimas_posiciones_uso[(nombre, linea)] = posicion
+
+
+# extrae (tipo_dato, nullable) cuando una declaración tiene ': Tipo' o ': Tipo?'
+def extraer_tipo_tokens(toks, idx_colon):
+    if idx_colon >= len(toks) or toks[idx_colon].type != "COLON":
+        return "Desconocido", False
+    idx_tipo = idx_colon + 1
+    if idx_tipo >= len(toks):
+        return "Desconocido", False
+
+    tipo_base = toks[idx_tipo].value
+    j = idx_tipo + 1
+    # si el tipo tiene genéricos como Map<String, Int>, avanza hasta el '>' de cierre
+    if j < len(toks) and toks[j].type == "MENOR":
+        nivel = 0
+        while j < len(toks):
+            if toks[j].type == "MENOR":
+                nivel += 1
+            elif toks[j].type == "MAYOR":
+                nivel -= 1
+                if nivel == 0:
+                    j += 1
+                    break
+            j += 1
+
+    nullable = j < len(toks) and toks[j].type == "QUESTION"
+    return tipo_base, nullable
+
+
+# guarda el tipo inferido en una declaración sin tipo explícito (ej. val pi = 3.14)
+def registrar_tipo_inferido(nombre, posicion, expr):
+    decl = buscar_declaracion(nombre, posicion + 1)
+    if not decl or decl["tipo_dato"] != "Desconocido":
+        return
+    tipo_dato, nullable = inferir_tipo_dato(expr)
+    if tipo_dato != "Desconocido":
+        decl["tipo_dato"] = tipo_dato
+        decl["nullable"] = nullable
+
+
+# devuelve (tipo_dato, nullable) para una expresión o literal
+def inferir_tipo_dato(nodo):
+    if nodo is None:
+        return "Desconocido", False
+    if isinstance(nodo, str):
+        if nodo.endswith("?"):
+            return nodo[:-1], True
+        return nodo, False
+    if not isinstance(nodo, tuple):
+        return "Desconocido", False
+
+    etiqueta = nodo[0]
+    if etiqueta == "literal":
+        _, tipo_tok, valor, linea = nodo
+        if tipo_tok == "ID":
+            pos = ultimas_posiciones_uso.get((valor, linea))
+            if pos is not None:
+                decl = buscar_declaracion(valor, pos)
+                if decl:
+                    return decl["tipo_dato"], decl["nullable"]
+            return "Desconocido", False
+        tipo_lit = MAPA_LITERALES_TIPO.get(tipo_tok, "Desconocido")
+        return tipo_lit, (tipo_lit == "Null")
+
+    if etiqueta == "tipo":
+        return nodo[1], False
+
+    if etiqueta in ("comparacion", "not"):
+        return "Boolean", False
+
+    if etiqueta in ("unario", "unario_post"):
+        tipo_op, _ = inferir_tipo_dato(nodo[2])
+        return (tipo_op, False) if tipo_op in TIPOS_NUMERICOS else ("Desconocido", False)
+
+    if etiqueta == "binop":
+        _, op, izq, der, _ = nodo
+        t_izq, _ = inferir_tipo_dato(izq)
+        t_der, _ = inferir_tipo_dato(der)
+        if op == "+" and t_izq == "String":
+            return "String", False
+        if t_izq in TIPOS_NUMERICOS and t_der in TIPOS_NUMERICOS:
+            for t_pref in ("Double", "Float", "Long", "Int"):
+                if t_izq == t_pref or t_der == t_pref:
+                    return t_pref, False
+        return "Desconocido", False
+
+    return "Desconocido", False
+
+# ===== Fin reglas semánticas Alan Aguilar =====
 
 # ==============================================================================
 # MANEJO DE ERRORES SINTÁCTICOS Y GENERACIÓN DE LOGS
