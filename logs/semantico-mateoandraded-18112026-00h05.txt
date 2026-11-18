@@ -1,0 +1,7 @@
+Análisis semántico - informe_mateo_errores.kt
+Usuario: mateoandraded
+Fecha: 18/11/2026 00:05:28
+
+ERRORES SEMÁNTICOS (2)
+Error semántico [Asignación]: 'NOTA_MINIMA' es const val y no puede reasignarse en la línea 29
+Error semántico [Identificadores]: 'reprobados' no está declarada en la línea 31

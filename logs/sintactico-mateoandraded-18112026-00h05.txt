@@ -1,0 +1,11 @@
+Análisis sintáctico - informe_mateo_errores.kt
+Usuario: mateoandraded
+Fecha: 18/11/2026 00:05:26
+
+ERRORES LÉXICOS (1)
+Error léxico: carácter no reconocido '#' en la línea 17
+
+ERRORES SINTÁCTICOS (3)
+Error sintáctico: token inesperado '{' (LLAVEIZQ) en la línea 25
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 27
+Error sintáctico: token inesperado '}' (LLAVEDER) en la línea 32
