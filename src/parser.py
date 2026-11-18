@@ -27,11 +27,13 @@ precedence = (
     ('left', 'AND'),
     ('nonassoc', 'IGUAL', 'DIFERENTE'),
     ('nonassoc', 'MENOR', 'MAYOR', 'MENORIGUAL', 'MAYORIGUAL'),
+    ('nonassoc', 'IS'),                         # x is Int
     ('left', 'ELVIS'),                          # ?:
     ('nonassoc', 'RANGO'),                      # ..
     # Alan Aguilar (Aritmética binaria y unarios)
     ('left', 'MAS', 'MENOS'),
     ('left', 'POR', 'DIVIDIDO', 'MODULO'),
+    ('left', 'AS'),                             # x as Int
     ('right', 'NOT', 'UMENOS'),                 # operadores unarios
     ('left', 'SAFE_CALL', 'NOT_NULL_ASSERT', 'INCREMENTO', 'DECREMENTO'), # postfijos
 )
@@ -313,8 +315,15 @@ def p_expresion_incremento(p):
 # sentencias de Alan: declaración de variable mutable y estructura when
 def p_sentencia_alan(p):
     """sentencia : declaracion_var
-                 | when_stmt"""
+                 | when_stmt
+                 | ciclo_do_while"""
     p[0] = p[1]
+
+
+# do-while: el bloque se ejecuta al menos una vez y luego se revisa la condición
+def p_ciclo_do_while(p):
+    "ciclo_do_while : DO bloque WHILE LPAREN expresion RPAREN"
+    p[0] = ("while", p[5], p[2], p.lineno(1))
 
 # declaración mutable con tipo explícito (var x: Tipo = ...)
 def p_declaracion_var(p):
@@ -422,7 +431,8 @@ def p_sentencia_daniela(p):
                  | declaracion_const
                  | ciclo_while
                  | ciclo_for
-                 | salto"""
+                 | salto
+                 | clase"""
     p[0] = p[1]
 
 # agrego mis expresiones al programa
@@ -430,6 +440,39 @@ def p_expresion_daniela(p):
     """expresion : conjunto
                  | lambda_expr"""
     p[0] = p[1]
+
+
+# clases: class Persona { ... } o class Persona(val nombre: String) { ... }
+def p_clase(p):
+    """clase : CLASS ID bloque
+             | CLASS ID LPAREN parametros_clase RPAREN
+             | CLASS ID LPAREN parametros_clase RPAREN bloque"""
+    p[0] = p[len(p) - 1] if len(p) in (4, 7) else None
+
+
+def p_parametros_clase(p):
+    """parametros_clase : parametro_clase
+                        | parametros_clase COMA parametro_clase"""
+
+
+def p_parametro_clase(p):
+    """parametro_clase : VAL ID COLON tipo
+                       | VAR ID COLON tipo
+                       | ID COLON tipo"""
+
+
+# revisar el tipo: x is Int, x !is String
+def p_expresion_is(p):
+    """expresion : expresion IS tipo
+                 | expresion NOT IS tipo %prec IS"""
+    p[0] = ("comparacion", "is", p[1], None, p.lineno(2))
+
+
+# conversión de tipo: x as Int, x as? String
+def p_expresion_as(p):
+    """expresion : expresion AS tipo
+                 | expresion AS QUESTION tipo"""
+    p[0] = p[3] if len(p) == 4 else f"{p[4]}?"
 
 # operadores lógicos y de comparación
 def p_expresion_logica(p):
@@ -476,8 +519,7 @@ def p_declaracion_nullable(p):
                             | VAL ID COLON tipo_nullable ASIGNAR expresion
                             | VAR ID COLON tipo_nullable
                             | VAL ID COLON tipo ASIGNAR expresion
-                            | VAR ID ASIGNAR expresion
-                            | VAR ID COLON tipo ASIGNAR expresion"""
+                            | VAR ID ASIGNAR expresion"""
     if len(p) == 7:
         verificar_compatibilidad_tipo(p[4], p[6], p.lineno(5))
         p[0] = ("var_tipada", p[2], p[4], p.lineno(1))
@@ -636,6 +678,7 @@ def preparar_tabla_simbolos(codigo):
 
         elif tok.type == "CLASS" and siguiente and siguiente.type == "ID":
             tabla_simbolos["funciones"].add(siguiente.value)
+            declarar_parametros(toks, i + 2)
 
         elif tok.type == "FOR" and i + 3 < len(toks) and toks[i + 2].type == "ID":
             declarar(toks[i + 2], "FOR")
@@ -669,7 +712,7 @@ def declarar_parametros(toks, inicio):
             nivel -= 1
             if nivel == 0:
                 return
-        elif nivel == 1 and toks[j].type == "ID" and j + 1 < len(toks) and toks[j + 1].type == "COLON":
+        elif nivel == 1 and toks[j].type == "ID" and j + 1 < len(toks) and toks[j + 1].type == "COLON"                 and toks[j - 1].type not in ("VAL", "VAR"):
             tipo_dato, nullable = extraer_tipo_tokens(toks, j + 1)
             declarar(toks[j], "PARAMETRO", tipo_dato, nullable)
 
@@ -1102,16 +1145,22 @@ def verificar_ast_daniela(nodo):
 
 CARPETA_LOGS = Path(__file__).resolve().parents[1] / "logs"
 errores_sintacticos = []
+codigo_actual = {"lineas": 1}
 
 
 # guardo cada error con el token y la línea donde pasó
+# tipo 1: aparece un token que la gramática no espera
+# tipo 2: el archivo se acaba antes de cerrar una llave, paréntesis o sentencia
 def p_error(p):
     if p:
         errores_sintacticos.append(
             f"Error sintáctico: token inesperado '{p.value}' ({p.type}) en la línea {p.lineno}"
         )
     else:
-        errores_sintacticos.append("Error sintáctico: el código terminó antes de tiempo")
+        errores_sintacticos.append(
+            "Error sintáctico: el código terminó antes de tiempo (falta cerrar una llave, "
+            f"un paréntesis o terminar una sentencia) en la línea {codigo_actual['lineas']}"
+        )
 
 
 parser = yacc.yacc(debug=False, write_tables=False)
@@ -1127,6 +1176,7 @@ def analizar(codigo):
     global profundidad_bucle
     profundidad_bucle = 0
     
+    codigo_actual["lineas"] = max(1, len(codigo.rstrip().splitlines()))
     preparar_tabla_simbolos(codigo)
     lexer = construir_lexer()
     ast = parser.parse(codigo, lexer=lexer)

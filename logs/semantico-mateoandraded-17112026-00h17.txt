@@ -1,0 +1,7 @@
+Análisis semántico - algoritmos/algoritmo_mateo.kt
+Usuario: mateoandraded
+Fecha: 17/11/2026 00:17:07
+
+ERRORES SEMÁNTICOS (0)
+
+El programa es semánticamente válido.

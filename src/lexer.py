@@ -20,8 +20,8 @@ Notas de PLY:
       consultando el diccionario `reserved`.
 
 Uso:
-    python src/lexico/lexer.py <archivo.kt> <usuario_github>
-    Ejemplo: python src/lexico/lexer.py algoritmos/algoritmo_alan.kt alan-am
+    python -m src.lexer <archivo.kt> <usuario_github>
+    Ejemplo: python -m src.lexer algoritmos/algoritmo_alan.kt alan-am
 """
 
 import sys
@@ -148,8 +148,7 @@ tokens_daniela = [
     'ELVIS',            # ?:
     'NOT_NULL_ASSERT',  # !!
     'ARROW',            # ->
-    'NEWLINE',
-    'COLON',            # : 
+    'COLON',            # :
     'SEMICOLON',        # ; 
     'DOT',
 ]
@@ -352,7 +351,7 @@ def generar_log(usuario, tokens_encontrados, errores, archivo_fuente=""):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Uso: python src/lexico/lexer.py <archivo.kt> <usuario_github>")
+        print("Uso: python -m src.lexer <archivo.kt> <usuario_github>")
         sys.exit(1)
 
     archivo, usuario = sys.argv[1], sys.argv[2]
