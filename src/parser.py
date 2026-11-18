@@ -332,6 +332,7 @@ def p_declaracion_var(p):
                        | VAR ID COLON tipo ASIGNAR when_stmt"""
     if p[6] is not None:
         verificar_compatibilidad_tipo(p[4], p[6], p.lineno(5))
+    p[0] = ("var_tipada", p[2], p[4], p.lineno(1))
 
 
 # permite usar when como expresión en asignación val (val x = when (...) { ... })
@@ -507,10 +508,8 @@ def p_tipo_nullable(p):
 def p_tipo_daniela(p):
     """tipo : TIPO_STRING
             | TIPO_BOOLEAN
-            | TIPO_SET MENOR tipo MAYOR
-            | TIPO_SET MENOR tipo_nullable MAYOR
-            | TIPO_MUTABLESET MENOR tipo MAYOR
-            | TIPO_MUTABLESET MENOR tipo_nullable MAYOR"""
+            | TIPO_SET MENOR tipo_conjunto MAYOR
+            | TIPO_MUTABLESET MENOR tipo_conjunto MAYOR"""
     p[0] = p[1]
 
 
@@ -519,20 +518,27 @@ def p_declaracion_nullable(p):
     """declaracion_nullable : VAR ID COLON tipo_nullable ASIGNAR expresion
                             | VAL ID COLON tipo_nullable ASIGNAR expresion
                             | VAR ID COLON tipo_nullable
-                            | VAL ID COLON tipo ASIGNAR expresion"""
+                            | VAL ID COLON tipo ASIGNAR expresion
+                            | VAR ID ASIGNAR expresion"""
     if len(p) == 7:
         verificar_compatibilidad_tipo(p[4], p[6], p.lineno(5))
+        p[0] = ("var_tipada", p[2], p[4], p.lineno(1))
+    elif len(p) == 5 and p[3] == "=":
+        p[0] = ("val", p[2], p[4], p.lineno(1))
+    elif len(p) == 5:
+        p[0] = ("var_tipada", p[2], p[4], p.lineno(1))
 
 
 # constantes, por ejemplo const val MAX: Int = 10
 def p_declaracion_const(p):
     """declaracion_const : CONST VAL ID COLON tipo ASIGNAR expresion
-                         | CONST VAL ID COLON tipo_nullable ASIGNAR expresion
                          | CONST VAL ID ASIGNAR expresion"""
     if len(p) == 8:
         verificar_compatibilidad_tipo(p[5], p[7], p.lineno(6))
+        p[0] = ("var_tipada", p[3], p[5], p.lineno(1))
     else:
         registrar_tipo_inferido(p[3], p.lexpos(3), p[5])
+        p[0] = ("val", p[3], p[5], p.lineno(1))
 
 
 # llamada segura, por ejemplo nombre?.length o nombre?.uppercase()
@@ -589,9 +595,13 @@ def p_conjunto(p):
                 | SETOF LPAREN argumentos RPAREN
                 | MUTABLESETOF LPAREN RPAREN
                 | MUTABLESETOF LPAREN argumentos RPAREN
-                | SETOF MENOR tipo MAYOR LPAREN RPAREN
-                | MUTABLESETOF MENOR tipo MAYOR LPAREN RPAREN"""
+                | SETOF MENOR tipo_conjunto MAYOR LPAREN RPAREN
+                | MUTABLESETOF MENOR tipo_conjunto MAYOR LPAREN RPAREN"""
 
+def p_tipo_conjunto(p):
+    """tipo_conjunto : TIPO_INT
+                     | TIPO_STRING"""
+    p[0] = p[1]
 
 # ------------------------------------------------------------------------------
 # Lambdas: { a: Int, b: Int -> a + b }
@@ -1056,6 +1066,11 @@ def verificar_ast_daniela(nodo):
         # ('val', nombre, expr, linea)
         _, nombre, expr, _ = nodo
         tipos_variables[nombre] = inferir_tipo_daniela(expr)
+
+    elif etiqueta == "var_tipada":
+        # ('var_tipada', nombre, tipo_dato, linea)
+        _, nombre, tipo_dato, _ = nodo
+        tipos_variables[nombre] = tipo_dato
 
     # --- REGLA 1: Retorno de funciones ---
     elif etiqueta == "funcion":
